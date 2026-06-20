@@ -11,10 +11,9 @@ export function ScorecardStage({ scorecard, outreachMessage, setOutreachMessage,
   const avgScore = DIMS.reduce((s, d) => s + (overall[d] || 0), 0) / DIMS.length
 
   function copyOutreach() {
-    navigator.clipboard.writeText(outreachMessage).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
+    navigator.clipboard.writeText(outreachMessage)
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+      .catch(() => {})
   }
 
   function handleAddTracker() {
