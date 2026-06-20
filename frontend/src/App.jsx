@@ -1,3 +1,26 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { InterviewProvider } from './context/InterviewContext'
+import { Sidebar } from './components/layout/Sidebar'
+import { JobsPage } from './components/jobs/JobsPage'
+import { InterviewPage } from './components/interview/InterviewPage'
+import { TrackerPage } from './components/tracker/TrackerPage'
+
 export default function App() {
-  return <div className="p-8 text-2xl font-bold text-blue-600">PlacementOS loading...</div>
+  return (
+    <BrowserRouter>
+      <InterviewProvider>
+        <div className="flex h-screen bg-slate-50 overflow-hidden">
+          <Sidebar />
+          <main className="flex-1 overflow-y-auto">
+            <Routes>
+              <Route path="/"          element={<JobsPage />} />
+              <Route path="/interview" element={<InterviewPage />} />
+              <Route path="/tracker"   element={<TrackerPage />} />
+              <Route path="*"          element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </InterviewProvider>
+    </BrowserRouter>
+  )
 }
