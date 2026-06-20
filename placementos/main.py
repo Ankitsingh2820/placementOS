@@ -32,9 +32,11 @@ app.include_router(jobs.router)
 app.include_router(interview.router)
 app.include_router(outreach.router)
 app.include_router(resume.router)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static_react")
 
+if os.path.isdir(STATIC_DIR):
+    app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
 
-@app.get("/")
-async def root():
-    return FileResponse("static/index.html")
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str):
+        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
