@@ -1,0 +1,44 @@
+[
+  {
+    "name": "We Work Remotely",
+    "short": "WWR",
+    "url": "https://weworkremotely.com/remote-jobs.rss",
+    "type": "rss",
+    "best_for": "Largest pure remote board. Strong dev/design listings."
+  },
+  {
+    "name": "RemoteOK",
+    "short": "RemoteOK",
+    "url": "https://remoteok.com/api",
+    "type": "remoteok_json",
+    "best_for": "High volume tech roles, salary shown."
+  },
+  {
+    "name": "Remotive",
+    "short": "Remotive",
+    "url": "https://remotive.com/api/remote-jobs?limit=50",
+    "type": "remotive_json",
+    "best_for": "Curated remote tech jobs, active community."
+  },
+  {
+    "name": "Himalayas",
+    "short": "Himalayas",
+    "url": "https://himalayas.app/jobs/rss",
+    "type": "rss",
+    "best_for": "Remote-only roles, high-quality global companies."
+  },
+  {
+    "name": "JSearch",
+    "short": "JSearch",
+    "url": "https://jsearch.p.rapidapi.com/search?query=remote+software+engineer&num_pages=1&date_posted=week",
+    "type": "jsearch_json",
+    "best_for": "Aggregates LinkedIn, Glassdoor, Indeed. Needs RAPIDAPI_KEY."
+  },
+  {
+    "name": "Adzuna",
+    "short": "Adzuna",
+    "url": "https://api.adzuna.com/v1/api/jobs/in/search/1?results_per_page=50&content-type=application/json",
+    "type": "adzuna_json",
+    "best_for": "India job listings, broad coverage. Needs ADZUNA_APP_ID + ADZUNA_APP_KEY."
+  }
+]

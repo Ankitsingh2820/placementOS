@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlacementOS — Find it. Prep for it. Get it.</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>PlacementOS<span>Find it → Prep for it → Get it</span></h1>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('jobs')">Jobs</button>
+  <button onclick="switchTab('interview')">Interview Prep</button>
+  <button onclick="switchTab('tracker')">Tracker</button>
+</nav>
+
+<!-- ===== JOBS TAB ===== -->
+<div id="tab-jobs" class="tab-content active">
+  <div class="feed-controls">
+    <input id="search-input" type="text" placeholder="Search by title, company, or stack keyword..." oninput="filterJobs()">
+    <select id="eligibility-filter" onchange="filterJobs()">
+      <option value="">All eligibility</option>
+      <option value="green">Worldwide (Green)</option>
+      <option value="yellow">Check timezone (Yellow)</option>
+    </select>
+    <select id="source-filter" onchange="filterJobs()">
+      <option value="">All boards</option>
+      <option value="WWR">We Work Remotely</option>
+      <option value="RemoteOK">RemoteOK</option>
+      <option value="Remotive">Remotive</option>
+      <option value="Himalayas">Himalayas</option>
+      <option value="JSearch">JSearch (LinkedIn/Glassdoor)</option>
+      <option value="Adzuna">Adzuna</option>
+    </select>
+    <select id="worktype-filter" onchange="filterJobs()">
+      <option value="">Remote &amp; Onsite</option>
+      <option value="remote">Remote only</option>
+      <option value="hybrid">Hybrid</option>
+      <option value="onsite">Onsite only</option>
+    </select>
+    <button class="btn btn-secondary btn-sm" onclick="loadJobs()">Refresh</button>
+  </div>
+  <!-- Resume match panel -->
+  <div class="match-panel" id="match-panel">
+    <div class="match-panel-header" onclick="toggleMatchPanel()">
+      <span id="match-panel-title">Match jobs to my resume</span>
+      <span id="match-panel-chevron">▼</span>
+    </div>
+    <div class="match-panel-body" id="match-panel-body">
+      <div class="match-inputs">
+        <div class="match-input-col">
+          <label class="match-label">Upload PDF resume</label>
+          <input type="file" id="match-resume-file" accept=".pdf" onchange="onMatchFileChange(this)">
+          <span id="match-file-status" style="font-size:0.78rem;color:#64748b;margin-top:4px;display:block;"></span>
+        </div>
+        <div class="match-input-col" style="flex:2;">
+          <label class="match-label">Or paste resume text</label>
+          <textarea id="match-resume-text" rows="4" placeholder="Paste your resume here..."></textarea>
+        </div>
+      </div>
+      <div class="match-actions">
+        <button class="btn btn-primary btn-sm" onclick="matchResume()">Find matching jobs</button>
+        <button class="btn btn-secondary btn-sm" id="match-clear-btn" onclick="clearMatch()" style="display:none;">Clear match</button>
+        <span id="match-status" style="font-size:0.85rem;color:#64748b;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="job-grid" class="job-grid">
+    <div class="empty-state"><strong>Loading jobs...</strong><p>Fetching India-friendly remote roles from top boards</p></div>
+  </div>
+</div>
+
+<!-- ===== INTERVIEW TAB ===== -->
+<div id="tab-interview" class="tab-content">
+
+  <!-- Stage 1: Intake -->
+  <div id="stage-intake" class="interview-stage active">
+    <div class="interview-layout">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin-bottom:0;">Your Resume</h3>
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer; margin:0;">
+            Upload PDF
+            <input type="file" id="resume-pdf-input" accept=".pdf" style="display:none;" onchange="uploadResumePDF(this)">
+          </label>
+        </div>
+        <div id="resume-upload-status" style="font-size:0.8rem; margin-bottom:8px; min-height:18px;"></div>
+        <textarea id="resume-input" placeholder="Paste your resume text here, or upload a PDF above..."></textarea>
+      </div>
+      <div class="panel">
+        <h3>Job Description</h3>
+        <textarea id="jd-input" placeholder="Paste the job description here, or click 'Prep for this role' on a job card to auto-load it..."></textarea>
+        <input class="github-input" id="github-input" type="text" placeholder="GitHub URL (optional — used for outreach message)">
+      </div>
+    </div>
+    <div style="margin-top:20px; text-align:center;">
+      <button class="btn btn-primary" onclick="startInterview()" style="padding:12px 36px; font-size:1rem;">
+        Start Mock Interview
+      </button>
+      <p style="margin-top:10px; font-size:0.8rem; color:#94a3b8;">
+        Chrome required for voice. A text fallback is available if mic is unavailable.
+      </p>
+    </div>
+  </div>
+
+  <!-- Stage 2: Live Interview -->
+  <div id="stage-interview" class="interview-stage">
+    <div class="panel" style="max-width:700px; margin:0 auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3>Mock Interview</h3>
+        <span id="q-counter" style="font-size:0.85rem; color:#64748b;"></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div id="question-display">Preparing your first question...</div>
+      <div id="transcript-display">Your answer will appear here as you speak...</div>
+      <div class="voice-controls">
+        <div class="recording-indicator" id="rec-indicator"></div>
+        <button class="btn btn-primary" id="btn-listen" onclick="startListening()" disabled>🎙 Start Speaking</button>
+        <button class="btn btn-secondary" id="btn-done" onclick="submitAnswer()" disabled>Done Answering</button>
+        <button class="btn btn-secondary btn-sm" onclick="endSession()" style="margin-left:auto; color:#ef4444;">End Session</button>
+      </div>
+      <p style="font-size:0.78rem; color:#94a3b8; margin-top:10px;">
+        Click "Done Answering" when you finish — you will never be cut off mid-thought.
+      </p>
+    </div>
+  </div>
+
+  <!-- Stage 3: Scorecard -->
+  <div id="stage-scorecard" class="interview-stage">
+    <div style="max-width:760px; margin:0 auto;">
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3>Overall Scorecard</h3>
+        <div class="scorecard-grid" id="overall-scores"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3>Answer Breakdown</h3>
+        <div id="answer-breakdown"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3>Rewritten Strong Answer</h3>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:10px;">Here's how your weakest answer could have sounded using full STAR structure:</p>
+        <div id="rewritten-answer" style="background:#f0f9ff; border-left:3px solid #0ea5e9; padding:14px; border-radius:8px; font-size:0.9rem; line-height:1.6;"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3>Cold Outreach Message</h3>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:10px;">Personalized for this role. Edit before sending.</p>
+        <div id="outreach-loading" style="color:#94a3b8; font-size:0.9rem; padding:10px 0;">Generating your outreach message...</div>
+        <textarea id="outreach-text" style="display:none; min-height:110px;"></textarea>
+        <div id="outreach-actions" style="display:none; gap:8px; margin-top:8px;">
+          <button class="btn btn-primary btn-sm" onclick="copyOutreach()">Copy Message</button>
+          <button class="btn btn-secondary btn-sm" onclick="addToTracker()">Add to Tracker</button>
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:24px; margin-bottom:8px;">
+        <button class="btn btn-secondary" onclick="resetInterview()">Start New Session</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== TRACKER TAB ===== -->
+<div id="tab-tracker" class="tab-content">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="font-size:1.1rem; font-weight:600;">Application Tracker</h2>
+    <button class="btn btn-secondary btn-sm" onclick="exportCSV()">Export CSV</button>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="tracker-table" id="tracker-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Role</th>
+          <th>Board</th>
+          <th>Date Applied</th>
+          <th>Prep Score</th>
+          <th>Status</th>
+          <th>Follow-up</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tracker-body"></tbody>
+    </table>
+  </div>
+  <div id="tracker-empty" class="empty-state" style="display:none;">
+    <strong>No applications yet</strong>
+    <p>Click "Save" on a job card or "Add to Tracker" after a mock session.</p>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
