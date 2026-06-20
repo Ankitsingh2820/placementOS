@@ -1,0 +1,11 @@
+node_modules/
+frontend/dist/
+placementos/static_react/
+placementos/__pycache__/
+placementos/routers/__pycache__/
+placementos/services/__pycache__/
+placementos/tests/__pycache__/
+*.pyc
+*.pyo
+.env
+.superpowers/
