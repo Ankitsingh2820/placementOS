@@ -8,28 +8,37 @@ export function useTracker() {
     try { return JSON.parse(localStorage.getItem(KEY) || '[]') } catch { return [] }
   })
 
-  const persist = useCallback((next) => {
-    setRows(next)
-    localStorage.setItem(KEY, JSON.stringify(next))
+  const addRow = useCallback((job, prepScore = '') => {
+    setRows(prev => {
+      if (prev.find(r => r.url === job.url && job.url)) return prev
+      const next = [{
+        id: Date.now().toString(),
+        company: job.company || '', role: job.title || '',
+        source: job.source || '', url: job.url || '',
+        date_applied: new Date().toISOString().slice(0, 10),
+        prep_score: prepScore, status: 'Saved', followup_date: '',
+      }, ...prev]
+      localStorage.setItem(KEY, JSON.stringify(next))
+      return next
+    })
+    return true
   }, [])
 
-  const addRow = useCallback((job, prepScore = '') => {
-    if (rows.find(r => r.url === job.url && job.url)) return false
-    persist([{
-      id: Date.now().toString(),
-      company: job.company || '', role: job.title || '',
-      source: job.source || '', url: job.url || '',
-      date_applied: new Date().toISOString().slice(0, 10),
-      prep_score: prepScore, status: 'Saved', followup_date: '',
-    }, ...rows])
-    return true
-  }, [rows, persist])
-
   const updateRow = useCallback((id, patch) => {
-    persist(rows.map(r => r.id === id ? { ...r, ...patch } : r))
-  }, [rows, persist])
+    setRows(prev => {
+      const next = prev.map(r => r.id === id ? { ...r, ...patch } : r)
+      localStorage.setItem(KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
 
-  const deleteRow = useCallback((id) => persist(rows.filter(r => r.id !== id)), [rows, persist])
+  const deleteRow = useCallback((id) => {
+    setRows(prev => {
+      const next = prev.filter(r => r.id !== id)
+      localStorage.setItem(KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
 
   const exportCSV = useCallback(() => {
     const headers = ['Company', 'Role', 'Source', 'Date Applied', 'Prep Score', 'Status', 'Follow-up', 'URL']
