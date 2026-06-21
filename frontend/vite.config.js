@@ -16,6 +16,8 @@ export default defineConfig({
       '/parse-resume':'http://localhost:8000',
       '/coach':       'http://localhost:8000',
       '/scout':       'http://localhost:8000',
+      '/chat':        'http://localhost:8000',
+      '/code':        'http://localhost:8000',
     },
   },
   build: {
