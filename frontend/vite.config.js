@@ -14,6 +14,8 @@ export default defineConfig({
       '/outreach':    'http://localhost:8000',
       '/resume':      'http://localhost:8000',
       '/parse-resume':'http://localhost:8000',
+      '/coach':       'http://localhost:8000',
+      '/scout':       'http://localhost:8000',
     },
   },
   build: {

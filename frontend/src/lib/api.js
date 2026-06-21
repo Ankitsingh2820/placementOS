@@ -44,6 +44,25 @@ export async function* streamInterview({ resume, jd, history, action, questionsA
   }
 }
 
+export async function* streamTailor({ resume, jd }) {
+  const r = await fetch('/resume/tailor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resume, jd }),
+  })
+  if (!r.ok) throw new Error('Failed to tailor resume')
+  const reader = r.body.getReader()
+  const decoder = new TextDecoder()
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    for (const line of decoder.decode(value).split('\n')) {
+      if (!line.startsWith('data: ')) continue
+      try { yield JSON.parse(line.slice(6)) } catch {}
+    }
+  }
+}
+
 export async function generateOutreach({ resume, company, role, github }) {
   const r = await fetch('/outreach', {
     method: 'POST',
@@ -51,5 +70,64 @@ export async function generateOutreach({ resume, company, role, github }) {
     body: JSON.stringify({ resume, company, role, github }),
   })
   if (!r.ok) throw new Error('Failed to generate outreach')
+  return r.json()
+}
+
+export async function* streamCoach({ resume, job }) {
+  const r = await fetch('/coach', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resume, job }),
+  })
+  if (!r.ok) throw new Error('Coach request failed')
+  const reader = r.body.getReader()
+  const decoder = new TextDecoder()
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    for (const line of decoder.decode(value).split('\n')) {
+      if (!line.startsWith('data: ')) continue
+      try { yield JSON.parse(line.slice(6)) } catch {}
+    }
+  }
+}
+
+export async function scoutJobs(query) {
+  const r = await fetch('/scout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  })
+  if (!r.ok) throw new Error('Scout request failed')
+  return r.json()
+}
+
+export async function generateDigest(resume) {
+  const r = await fetch('/scout/digest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resume }),
+  })
+  if (!r.ok) throw new Error('Digest request failed')
+  return r.json()
+}
+
+export async function analyzeGap({ scorecard, jd }) {
+  const r = await fetch('/interview/gap', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scorecard, jd }),
+  })
+  if (!r.ok) throw new Error('Gap analysis request failed')
+  return r.json()
+}
+
+export async function getAtsKeywords({ resume, jd }) {
+  const r = await fetch('/resume/ats', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resume, jd }),
+  })
+  if (!r.ok) throw new Error('ATS analysis request failed')
   return r.json()
 }
