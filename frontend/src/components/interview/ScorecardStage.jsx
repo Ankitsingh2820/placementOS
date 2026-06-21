@@ -130,7 +130,7 @@ export function ScorecardStage({ scorecard, outreachMessage, setOutreachMessage,
           <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Interview Gap Analysis</h3>
           {gapStatus === 'idle' && (
             <button onClick={handleGapAnalysis}
-              className="text-xs font-semibold bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg transition-colors">
+              className="text-xs font-semibold bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg transition-colors">
               Analyze Gaps
             </button>
           )}
