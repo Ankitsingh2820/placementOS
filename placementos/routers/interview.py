@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from services.claude import stream_interview
+from services.agents import analyze_gap
 
 router = APIRouter()
 
@@ -14,6 +15,11 @@ class InterviewRequest(BaseModel):
     history: list[dict]
     action: str = "next"
     questions_asked: int = 0
+
+
+class GapRequest(BaseModel):
+    scorecard: dict
+    jd: str
 
 
 @router.post("/interview")
@@ -33,3 +39,8 @@ async def interview(body: InterviewRequest):
         yield f"data: {json.dumps({'done': True})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@router.post("/interview/gap")
+async def gap_analysis(body: GapRequest):
+    return await analyze_gap(body.scorecard, body.jd)
