@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from routers import jobs, interview, outreach, resume
+from routers import jobs, interview, outreach, resume, coach, scout
 from services.feed import refresh_feed
 
 
@@ -32,6 +32,8 @@ app.include_router(jobs.router)
 app.include_router(interview.router)
 app.include_router(outreach.router)
 app.include_router(resume.router)
+app.include_router(coach.router)
+app.include_router(scout.router)
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static_react")
 
 if os.path.isdir(STATIC_DIR):
