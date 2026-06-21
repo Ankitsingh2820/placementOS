@@ -36,7 +36,7 @@ export function JobFilters({ filters, setFilters, onRefresh }) {
 
       <select value={filters.source} onChange={set('source')} className={selectCls}>
         <option value="">All boards</option>
-        {['WWR','RemoteOK','Remotive','Himalayas','JSearch','Adzuna'].map(s => (
+        {['WWR','RemoteOK','Remotive','Himalayas','JSearch-IN','JSearch','Adzuna'].map(s => (
           <option key={s} value={s}>{s}</option>
         ))}
       </select>

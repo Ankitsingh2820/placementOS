@@ -1,6 +1,6 @@
 import { useInterviewContext } from '../../context/InterviewContext'
 import { useNavigate } from 'react-router-dom'
-import { ExternalLink, Bookmark, Zap, FileText, Mic2, MapPin, Clock } from 'lucide-react'
+import { ExternalLink, Bookmark, Zap, FileText, Mic2, MapPin, Clock, Code2 } from 'lucide-react'
 
 const eligConfig = {
   green:  { label: 'Worldwide',  dot: 'bg-emerald-400', cls: 'text-emerald-400' },
@@ -57,6 +57,7 @@ export function JobCard({ job, matchScore, onSave }) {
   function handlePrep()   { setCurrentJob(job); navigate('/interview') }
   function handleTailor() { setCurrentJob(job); navigate('/tailor') }
   function handleCoach()  { setCurrentJob(job); navigate('/coach') }
+  function handleCode()   { setCurrentJob(job); navigate('/code') }
 
   return (
     <div className={`group rounded-2xl flex flex-col overflow-hidden transition-all duration-200 animate-fade-in hover:-translate-y-1 ${
@@ -136,9 +137,13 @@ export function JobCard({ job, matchScore, onSave }) {
           className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-colors">
           <FileText size={14} />
         </button>
-        <button onClick={handleCoach} title="Full Coach Package"
+        <button onClick={handleCoach} title="App Coach"
           className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-emerald-400/15 text-slate-400 hover:text-emerald-400 border border-white/10 transition-colors">
           <Zap size={14} />
+        </button>
+        <button onClick={handleCode} title="Code Practice"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-violet-400/15 text-slate-400 hover:text-violet-400 border border-white/10 transition-colors">
+          <Code2 size={14} />
         </button>
         {job.url && (
           <a href={job.url} target="_blank" rel="noopener noreferrer" title="Apply"

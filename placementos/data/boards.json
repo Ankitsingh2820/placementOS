@@ -28,14 +28,21 @@
     "best_for": "Remote-only roles, high-quality global companies."
   },
   {
-    "name": "JSearch",
+    "name": "JSearch India",
+    "short": "JSearch-IN",
+    "url": "https://jsearch.p.rapidapi.com/search?query=software+engineer+india&num_pages=1&date_posted=week",
+    "type": "jsearch_json",
+    "best_for": "LinkedIn + Indeed + Glassdoor India listings. Needs RAPIDAPI_KEY."
+  },
+  {
+    "name": "JSearch Remote",
     "short": "JSearch",
     "url": "https://jsearch.p.rapidapi.com/search?query=remote+software+engineer&num_pages=1&date_posted=week",
     "type": "jsearch_json",
-    "best_for": "Aggregates LinkedIn, Glassdoor, Indeed. Needs RAPIDAPI_KEY."
+    "best_for": "Aggregates LinkedIn, Glassdoor, Indeed globally. Needs RAPIDAPI_KEY."
   },
   {
-    "name": "Adzuna",
+    "name": "Adzuna India",
     "short": "Adzuna",
     "url": "https://api.adzuna.com/v1/api/jobs/in/search/1?results_per_page=50&content-type=application/json",
     "type": "adzuna_json",

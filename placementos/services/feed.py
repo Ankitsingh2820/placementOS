@@ -234,10 +234,13 @@ async def _fetch_board(client: httpx.AsyncClient, board: dict) -> list[dict]:
                 return []
             params = {"app_id": app_id, "app_key": app_key}
 
-        r = await client.get(board["url"], timeout=10, headers=headers, params=params)
+        if board["type"] == "rss":
+            headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+            headers["Accept"] = "application/rss+xml, application/xml, text/xml, */*"
+        r = await client.get(board["url"], timeout=15, headers=headers, params=params, follow_redirects=True)
         r.raise_for_status()
         if board["type"] == "rss":
-            return _parse_rss(board, r.text)
+            return _parse_rss(board, r.content)  # bytes avoids surrogate encoding issues
         elif board["type"] == "remoteok_json":
             return _parse_remoteok(board, r.json())
         elif board["type"] == "remotive_json":
@@ -246,7 +249,9 @@ async def _fetch_board(client: httpx.AsyncClient, board: dict) -> list[dict]:
             return _parse_jsearch(board, r.json())
         elif board["type"] == "adzuna_json":
             return _parse_adzuna(board, r.json())
-    except Exception:
+    except Exception as _e:
+        import logging
+        logging.getLogger("feed").warning("Board %s failed: %s", board.get("short"), _e)
         return []
     return []
 
@@ -255,7 +260,7 @@ async def refresh_feed() -> None:
     boards_path = os.path.join(os.path.dirname(__file__), "../data/boards.json")
     with open(boards_path) as f:
         boards = json.load(f)
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         results = await asyncio.gather(*[_fetch_board(client, b) for b in boards])
     jobs: list[dict] = []
     for batch in results:
