@@ -12,7 +12,7 @@ import {
 /* ─── Skeleton ──────────────────────────────────────────────── */
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-card">
+    <div className="bg-white rounded-2xl border border-indigo-100 overflow-hidden shadow-[0_2px_8px_rgba(99,102,241,0.08)]">
       <div className="p-4 flex flex-col gap-3">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl skeleton shrink-0" />

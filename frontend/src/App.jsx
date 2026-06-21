@@ -12,9 +12,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <InterviewProvider>
-        <div className="flex h-screen bg-slate-50 overflow-hidden">
+        <div className="flex h-screen overflow-hidden" style={{ background: '#EEF2FF' }}>
           <Sidebar />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto dot-grid">
             <Routes>
               <Route path="/"          element={<JobsPage />} />
               <Route path="/interview" element={<InterviewPage />} />

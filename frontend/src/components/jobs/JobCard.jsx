@@ -60,8 +60,10 @@ export function JobCard({ job, matchScore, onSave }) {
   function handleCoach()  { setCurrentJob(job); navigate('/coach') }
 
   return (
-    <div className={`group bg-white rounded-2xl border flex flex-col overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 animate-fade-in ${
-      matchScore >= 60 ? 'border-emerald-200' : 'border-slate-200'
+    <div className={`group bg-white rounded-2xl flex flex-col overflow-hidden transition-all duration-200 animate-fade-in hover:-translate-y-1 ${
+      matchScore >= 60
+        ? 'shadow-[0_2px_12px_rgba(16,185,129,0.15)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.22)] border border-emerald-200'
+        : 'shadow-[0_2px_8px_rgba(99,102,241,0.08)] hover:shadow-[0_8px_24px_rgba(99,102,241,0.16)] border border-indigo-100'
     }`}>
 
       {/* Card body */}
@@ -130,7 +132,7 @@ export function JobCard({ job, matchScore, onSave }) {
       </div>
 
       {/* Action row */}
-      <div className="px-5 py-3.5 border-t border-slate-100 flex items-center gap-2">
+      <div className="px-5 py-3.5 border-t border-indigo-50 bg-indigo-50/40 flex items-center gap-2">
         {/* Primary */}
         <button onClick={handlePrep}
           className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl transition-colors">
