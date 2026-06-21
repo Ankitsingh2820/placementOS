@@ -8,6 +8,7 @@ import { ResumeTailorPage } from './components/resume/ResumeTailorPage'
 import { CoachPage } from './components/coach/CoachPage'
 import { ScoutPage } from './components/scout/ScoutPage'
 import { ChatPage } from './components/chat/ChatPage'
+import { CodePage } from './components/code/CodePage'
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
               <Route path="/tracker"   element={<TrackerPage />} />
               <Route path="/scout"     element={<ScoutPage />} />
               <Route path="/chat"      element={<ChatPage />} />
+              <Route path="/code"      element={<CodePage />} />
               <Route path="*"          element={<Navigate to="/" replace />} />
             </Routes>
           </main>

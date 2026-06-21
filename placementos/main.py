@@ -1,3 +1,4 @@
+
 import os
 import asyncio
 from contextlib import asynccontextmanager
@@ -8,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from routers import jobs, interview, outreach, resume, coach, scout, chat
+from routers import jobs, interview, outreach, resume, coach, scout, chat, code
 from services.feed import refresh_feed
 
 
@@ -35,6 +36,7 @@ app.include_router(resume.router)
 app.include_router(coach.router)
 app.include_router(scout.router)
 app.include_router(chat.router)
+app.include_router(code.router)
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static_react")
 
 if os.path.isdir(STATIC_DIR):

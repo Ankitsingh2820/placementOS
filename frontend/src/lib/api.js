@@ -156,3 +156,33 @@ export async function* streamChat({ message, history, resume, job }) {
     }
   }
 }
+
+export async function fetchProblems({ jobTitle = '', jobCompany = '', jobDescription = '' } = {}) {
+  const params = new URLSearchParams()
+  if (jobTitle) params.set('job_title', jobTitle)
+  if (jobCompany) params.set('job_company', jobCompany)
+  if (jobDescription) params.set('job_description', jobDescription.slice(0, 500))
+  const r = await fetch(`/code/problems?${params}`)
+  if (!r.ok) throw new Error('Failed to fetch problems')
+  return r.json()
+}
+
+export async function evaluateCode({ problem, code, language }) {
+  const r = await fetch('/code/evaluate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ problem, code, language }),
+  })
+  if (!r.ok) throw new Error('Evaluation failed')
+  return r.json()
+}
+
+export async function fetchHint({ problem, code, language }) {
+  const r = await fetch('/code/hint', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ problem, code, language }),
+  })
+  if (!r.ok) throw new Error('Hint request failed')
+  return r.json()
+}
