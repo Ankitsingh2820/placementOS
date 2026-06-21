@@ -5,14 +5,14 @@ import { JobFilters } from './JobFilters'
 import { JobCard } from './JobCard'
 import { parseResumePDF } from '../../lib/api'
 import {
-  Briefcase, Globe, Wifi, Sparkles, ArrowRight,
+  Briefcase, Wifi, Sparkles, ArrowRight,
   Upload, X, ChevronDown, ChevronUp, Search, Mic2, Zap,
 } from 'lucide-react'
 
 /* ─── Skeleton ──────────────────────────────────────────────── */
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-indigo-100 overflow-hidden shadow-[0_2px_8px_rgba(99,102,241,0.08)]">
+    <div className="rounded-2xl border border-slate-700/50 overflow-hidden" style={{ background: 'linear-gradient(160deg, #1E293B 0%, #0F172A 100%)' }}>
       <div className="p-4 flex flex-col gap-3">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl skeleton shrink-0" />
@@ -35,7 +35,7 @@ function SkeletonCard() {
           <div className="h-5 w-10 skeleton rounded-md" />
         </div>
       </div>
-      <div className="border-t border-slate-100 px-4 py-3 bg-slate-50/60 flex gap-2">
+      <div className="border-t border-white/5 px-4 py-3 bg-black/20 flex gap-2">
         <div className="h-8 flex-1 skeleton rounded-xl" />
         <div className="h-8 flex-1 skeleton rounded-xl" />
         <div className="h-8 flex-1 skeleton rounded-xl" />
@@ -47,9 +47,9 @@ function SkeletonCard() {
 
 /* ─── Hero ──────────────────────────────────────────────────── */
 const steps = [
-  { icon: Search, label: 'Find',    desc: 'AI-ranked remote jobs' },
-  { icon: Mic2,   label: 'Prep',    desc: 'Interview + resume AI' },
-  { icon: Zap,    label: 'Get it',  desc: 'Coach + outreach'      },
+  { icon: Search, label: 'Find',   desc: 'AI-ranked remote jobs' },
+  { icon: Mic2,   label: 'Prep',   desc: 'Interview + resume AI' },
+  { icon: Zap,    label: 'Get it', desc: 'Coach + outreach'      },
 ]
 
 function StatPill({ value, label, color }) {
@@ -62,10 +62,10 @@ function StatPill({ value, label, color }) {
 }
 
 function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
-  const [open, setOpen]         = useState(false)
-  const [text, setText]         = useState('')
-  const [fileStatus, setFStatus]= useState('')
-  const [busy, setBusy]         = useState(false)
+  const [open, setOpen]          = useState(false)
+  const [text, setText]          = useState('')
+  const [fileStatus, setFStatus] = useState('')
+  const [busy, setBusy]          = useState(false)
   const fileRef = useRef(null)
 
   async function handleFile(e) {
@@ -84,9 +84,9 @@ function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
     setBusy(true); await onMatch(text); setBusy(false)
   }
 
-  const hasMatch = matchStatus?.includes('found')
-  const remote   = jobs.filter(j => j.work_type === 'remote').length
-  const worldwide= jobs.filter(j => j.eligibility === 'green').length
+  const hasMatch  = matchStatus?.includes('found')
+  const remote    = jobs.filter(j => j.work_type === 'remote').length
+  const worldwide = jobs.filter(j => j.eligibility === 'green').length
 
   return (
     <div className="relative rounded-2xl overflow-hidden mb-7"
@@ -123,7 +123,6 @@ function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
               India-friendly listings from WWR, RemoteOK, Remotive and more — ranked and prepped by AI.
             </p>
 
-            {/* 3-step flow */}
             <div className="flex items-center gap-2 flex-wrap">
               {steps.map(({ icon: Icon, label, desc }, i) => (
                 <div key={label} className="flex items-center gap-2">
@@ -145,7 +144,6 @@ function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
           {/* Right — stats + match CTA */}
           <div className="flex flex-col gap-4 lg:items-end">
 
-            {/* Stats */}
             <div className="flex items-center gap-6 bg-white/5 border border-white/10 rounded-xl px-5 py-4">
               <StatPill value={loading ? '—' : jobs.length} label="jobs"      color="text-white" />
               <div className="w-px h-8 bg-white/10" />
@@ -154,7 +152,6 @@ function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
               <StatPill value={loading ? '—' : worldwide}   label="worldwide" color="text-emerald-400" />
             </div>
 
-            {/* Resume match toggle */}
             <div className="w-full lg:w-80">
               <button onClick={() => setOpen(o => !o)}
                 className="w-full flex items-center justify-between gap-3 bg-primary/90 hover:bg-primary border border-blue-400/20 rounded-xl px-4 py-3 transition-colors group">
@@ -229,11 +226,11 @@ export function JobsPage() {
 
       {!loading && jobs.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-            <Briefcase size={24} className="text-slate-400" />
+          <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
+            <Briefcase size={24} className="text-slate-500" />
           </div>
-          <p className="font-semibold text-slate-700">No jobs match your filters</p>
-          <p className="text-sm text-slate-400 mt-1 max-w-xs">Try adjusting your search or click Refresh to reload listings.</p>
+          <p className="font-semibold text-slate-300">No jobs match your filters</p>
+          <p className="text-sm text-slate-500 mt-1 max-w-xs">Try adjusting your search or click Refresh to reload listings.</p>
         </div>
       )}
 
