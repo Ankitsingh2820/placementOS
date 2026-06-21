@@ -4,6 +4,8 @@ import { Sidebar } from './components/layout/Sidebar'
 import { JobsPage } from './components/jobs/JobsPage'
 import { InterviewPage } from './components/interview/InterviewPage'
 import { TrackerPage } from './components/tracker/TrackerPage'
+import { ResumeTailorPage } from './components/resume/ResumeTailorPage'
+import { CoachPage } from './components/coach/CoachPage'
 
 export default function App() {
   return (
@@ -15,6 +17,8 @@ export default function App() {
             <Routes>
               <Route path="/"          element={<JobsPage />} />
               <Route path="/interview" element={<InterviewPage />} />
+              <Route path="/tailor"    element={<ResumeTailorPage />} />
+              <Route path="/coach"     element={<CoachPage />} />
               <Route path="/tracker"   element={<TrackerPage />} />
               <Route path="*"          element={<Navigate to="/" replace />} />
             </Routes>

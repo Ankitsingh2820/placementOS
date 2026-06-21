@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { Briefcase, Mic2, LayoutList } from 'lucide-react'
+import { Briefcase, Mic2, LayoutList, FileText, Zap } from 'lucide-react'
 
 const nav = [
-  { to: '/',          icon: Briefcase,  label: 'Jobs',          end: true },
+  { to: '/',          icon: Briefcase,  label: 'Jobs',           end: true },
   { to: '/interview', icon: Mic2,       label: 'Interview Prep', end: false },
+  { to: '/tailor',    icon: FileText,   label: 'Resume Tailor',  end: false },
+  { to: '/coach',     icon: Zap,        label: 'App Coach',      end: false },
   { to: '/tracker',   icon: LayoutList, label: 'Tracker',        end: false },
 ]
 

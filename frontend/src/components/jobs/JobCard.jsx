@@ -23,6 +23,16 @@ export function JobCard({ job, matchScore, onSave }) {
     navigate('/interview')
   }
 
+  function handleTailor() {
+    setCurrentJob(job)
+    navigate('/tailor')
+  }
+
+  function handleCoach() {
+    setCurrentJob(job)
+    navigate('/coach')
+  }
+
   return (
     <div className={`bg-white rounded-xl border flex flex-col gap-3 p-4 hover:shadow-md transition-all ${
       matchScore >= 60 ? 'border-primary/40 shadow-sm shadow-primary/10' : 'border-slate-200'
@@ -58,15 +68,23 @@ export function JobCard({ job, matchScore, onSave }) {
 
       {job.salary && <p className="text-sm font-semibold text-mint">{job.salary}</p>}
 
-      <div className="flex gap-2 mt-auto pt-1">
+      <div className="flex gap-2 mt-auto pt-1 flex-wrap">
         <button onClick={handlePrep}
           className="flex-1 text-xs font-semibold bg-primary hover:bg-primary-hover text-white px-3 py-2 rounded-lg transition-colors">
-          Prep for this role
+          Prep Interview
+        </button>
+        <button onClick={handleTailor}
+          className="flex-1 text-xs font-semibold bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-2 rounded-lg transition-colors">
+          Tailor Resume
+        </button>
+        <button onClick={handleCoach}
+          className="flex-1 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg transition-colors">
+          Full Package
         </button>
         {job.url && (
           <a href={job.url} target="_blank" rel="noopener noreferrer"
             className="text-xs font-semibold bg-mint hover:bg-mint-hover text-white px-3 py-2 rounded-lg transition-colors">
-            Apply Now
+            Apply
           </a>
         )}
         <button onClick={() => onSave(job)}
