@@ -131,3 +131,28 @@ export async function getAtsKeywords({ resume, jd }) {
   if (!r.ok) throw new Error('ATS analysis request failed')
   return r.json()
 }
+
+export async function* streamChat({ message, history, resume, job }) {
+  const r = await fetch('/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, history, resume: resume || '', job: job || {} }),
+  })
+  if (!r.ok) throw new Error('Chat request failed')
+  const reader = r.body.getReader()
+  const decoder = new TextDecoder()
+  let buf = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buf += decoder.decode(value, { stream: true })
+    const lines = buf.split('\n')
+    buf = lines.pop()
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const json = JSON.parse(line.slice(6))
+      if (json.done) return
+      if (json.text) yield json.text
+    }
+  }
+}

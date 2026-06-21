@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Briefcase, Mic2, LayoutList, FileText, Zap, Search, Cpu } from 'lucide-react'
+import { Briefcase, Mic2, LayoutList, FileText, Zap, Search, Cpu, MessageCircle } from 'lucide-react'
 
 const sections = [
   {
@@ -21,6 +21,12 @@ const sections = [
     label: 'Track',
     items: [
       { to: '/tracker', icon: LayoutList, label: 'Tracker', end: false },
+    ],
+  },
+  {
+    label: 'Assist',
+    items: [
+      { to: '/chat', icon: MessageCircle, label: 'AI Career Chat', end: false },
     ],
   },
 ]

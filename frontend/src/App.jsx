@@ -7,6 +7,7 @@ import { TrackerPage } from './components/tracker/TrackerPage'
 import { ResumeTailorPage } from './components/resume/ResumeTailorPage'
 import { CoachPage } from './components/coach/CoachPage'
 import { ScoutPage } from './components/scout/ScoutPage'
+import { ChatPage } from './components/chat/ChatPage'
 
 export default function App() {
   return (
@@ -14,7 +15,7 @@ export default function App() {
       <InterviewProvider>
         <div className="flex h-screen overflow-hidden" style={{ background: '#080E1A' }}>
           <Sidebar />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto flex flex-col">
             <Routes>
               <Route path="/"          element={<JobsPage />} />
               <Route path="/interview" element={<InterviewPage />} />
@@ -22,6 +23,7 @@ export default function App() {
               <Route path="/coach"     element={<CoachPage />} />
               <Route path="/tracker"   element={<TrackerPage />} />
               <Route path="/scout"     element={<ScoutPage />} />
+              <Route path="/chat"      element={<ChatPage />} />
               <Route path="*"          element={<Navigate to="/" replace />} />
             </Routes>
           </main>
