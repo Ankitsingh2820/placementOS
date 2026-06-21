@@ -160,7 +160,11 @@ async def scout_jobs(query: str, jobs: list) -> list:
          "work_type": j.get("work_type", ""), "eligibility": j.get("eligibility", "")}
         for j in jobs[:60]
     ]
-    raw = await _call(SCOUT_PROMPT.format(query=query, jobs_json=json.dumps(slim)[:8000]), max_tokens=1024)
+    jobs_json = json.dumps(slim)
+    if len(jobs_json) > 8000:
+        slim = slim[:max(1, 8000 * len(slim) // len(jobs_json))]
+        jobs_json = json.dumps(slim)
+    raw = await _call(SCOUT_PROMPT.format(query=query, jobs_json=jobs_json), max_tokens=1024)
     results = _parse_json(raw, [])
     job_map = {j["id"]: j for j in jobs}
     return [
@@ -194,4 +198,5 @@ async def generate_digest(resume: str, jobs: list) -> list:
             item["url"] = job_map[jid].get("url", "")
             item["eligibility"] = job_map[jid].get("eligibility", "")
             item["work_type"] = job_map[jid].get("work_type", "")
+            item["description"] = job_map[jid].get("description", "")
     return results

@@ -129,8 +129,9 @@ export function ScorecardStage({ scorecard, outreachMessage, setOutreachMessage,
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Interview Gap Analysis</h3>
           {gapStatus === 'idle' && (
-            <button onClick={handleGapAnalysis}
-              className="text-xs font-semibold bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg transition-colors">
+            <button onClick={handleGapAnalysis} disabled={!currentJob}
+              title={!currentJob ? 'Select a job first to analyze gaps' : undefined}
+              className="text-xs font-semibold bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-lg transition-colors">
               Analyze Gaps
             </button>
           )}
