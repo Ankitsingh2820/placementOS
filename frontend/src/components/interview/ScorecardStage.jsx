@@ -1,11 +1,27 @@
 import { useState } from 'react'
 import { useTracker } from '../../hooks/useTracker'
+import { analyzeGap } from '../../lib/api'
 
 const DIMS = ['clarity', 'structure', 'relevance', 'specificity', 'confidence']
 
 export function ScorecardStage({ scorecard, outreachMessage, setOutreachMessage, currentJob, onReset }) {
   const [copied, setCopied] = useState(false)
+  const [gap, setGap] = useState(null)
+  const [gapStatus, setGapStatus] = useState('idle') // idle | loading | done
   const { addRow } = useTracker()
+
+  async function handleGapAnalysis() {
+    if (!scorecard || !currentJob) return
+    setGapStatus('loading')
+    try {
+      const jd = `${currentJob.title} at ${currentJob.company}\n\n${currentJob.description || ''}`
+      const result = await analyzeGap({ scorecard, jd })
+      setGap(result)
+      setGapStatus('done')
+    } catch {
+      setGapStatus('idle')
+    }
+  }
 
   const overall = scorecard?.overall || {}
   const avgScore = DIMS.reduce((s, d) => s + (overall[d] || 0), 0) / DIMS.length
@@ -106,6 +122,64 @@ export function ScorecardStage({ scorecard, outreachMessage, setOutreachMessage,
             </>
           : <p className="text-sm text-slate-400 animate-pulse">Generating outreach message...</p>
         }
+      </div>
+
+      {/* Gap Analyzer */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-5">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Interview Gap Analysis</h3>
+          {gapStatus === 'idle' && (
+            <button onClick={handleGapAnalysis}
+              className="text-xs font-semibold bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg transition-colors">
+              Analyze Gaps
+            </button>
+          )}
+        </div>
+
+        {gapStatus === 'loading' && <p className="text-sm text-slate-400 animate-pulse">Analyzing your performance gaps...</p>}
+
+        {gapStatus === 'done' && gap && (
+          <div className="space-y-4">
+            {gap.weak_areas?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-red-600 mb-2">Weak Areas</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {gap.weak_areas.map((a, i) => (
+                    <span key={i} className="text-xs bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full">{a}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {gap.study_plan?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-500 mb-2">Study Plan</p>
+                <div className="space-y-2">
+                  {gap.study_plan.map((item, i) => (
+                    <div key={i} className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-indigo-800 mb-0.5">{item.area}</p>
+                      <p className="text-xs text-slate-600 mb-1">Issue: {item.issue}</p>
+                      <p className="text-xs text-indigo-700">Exercise: {item.exercise}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {gap.practice_prompts?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-500 mb-2">Practice These Questions</p>
+                <div className="space-y-1.5">
+                  {gap.practice_prompts.map((q, i) => (
+                    <div key={i} className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700">
+                      {i + 1}. {q}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
