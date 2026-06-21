@@ -2,8 +2,10 @@ import io
 import json
 import pypdf
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from services.claude import get_client, MODEL
+from services.claude import get_client, MODEL, stream_tailor_resume
+from services.agents import analyze_ats
 
 router = APIRouter()
 
@@ -49,6 +51,26 @@ async def parse_resume(file: UploadFile = File(...)):
     return {"text": text}
 
 
+class TailorRequest(BaseModel):
+    resume: str
+    jd: str
+
+
+@router.post("/resume/tailor")
+async def tailor_resume(body: TailorRequest):
+    if not body.resume.strip():
+        raise HTTPException(status_code=400, detail="Resume text is required.")
+    if not body.jd.strip():
+        raise HTTPException(status_code=400, detail="Job description is required.")
+
+    async def generate():
+        async for chunk in stream_tailor_resume(body.resume, body.jd):
+            yield f"data: {json.dumps({'text': chunk})}\n\n"
+        yield f"data: {json.dumps({'done': True})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
+
+
 class MatchRequest(BaseModel):
     resume: str
 
@@ -80,3 +102,17 @@ async def match_resume(body: MatchRequest):
         data = {"skills": [], "titles": [], "level": "mid"}
 
     return data
+
+
+class ATSRequest(BaseModel):
+    resume: str
+    jd: str
+
+
+@router.post("/resume/ats")
+async def ats_keywords(body: ATSRequest):
+    if not body.resume.strip():
+        raise HTTPException(status_code=400, detail="Resume text is required.")
+    if not body.jd.strip():
+        raise HTTPException(status_code=400, detail="Job description is required.")
+    return await analyze_ats(body.resume, body.jd)
