@@ -1,6 +1,18 @@
+import { useState } from 'react'
 import { Search, RefreshCw } from 'lucide-react'
 
 export function JobFilters({ filters, setFilters, onRefresh }) {
+  const [refreshing, setRefreshing] = useState(false)
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    try {
+      await fetch('/jobs/refresh', { method: 'POST' })
+      await onRefresh()
+    } finally {
+      setRefreshing(false)
+    }
+  }
   const set = (key) => (e) => setFilters(f => ({ ...f, [key]: e.target.value }))
 
   const selectCls = 'bg-slate-800 border border-slate-700/60 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer hover:border-slate-600 transition-colors'
@@ -36,10 +48,10 @@ export function JobFilters({ filters, setFilters, onRefresh }) {
         <option value="onsite">Onsite</option>
       </select>
 
-      <button onClick={onRefresh}
-        className="flex items-center gap-2 text-sm font-medium bg-slate-800 border border-slate-700/60 hover:border-slate-600 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl transition-colors">
-        <RefreshCw size={13} />
-        Refresh
+      <button onClick={handleRefresh} disabled={refreshing}
+        className="flex items-center gap-2 text-sm font-medium bg-slate-800 border border-slate-700/60 hover:border-slate-600 hover:bg-slate-700 text-slate-300 disabled:opacity-50 px-4 py-2 rounded-xl transition-colors">
+        <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+        {refreshing ? 'Fetching…' : 'Refresh'}
       </button>
     </div>
   )

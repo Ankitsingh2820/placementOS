@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-from services.feed import get_cached_jobs
+from services.feed import get_cached_jobs, refresh_feed
 
 router = APIRouter()
 
@@ -18,3 +18,9 @@ async def list_jobs(
     if source:
         jobs = [j for j in jobs if j.get("source", "").lower() == source.lower()]
     return jobs
+
+
+@router.post("/jobs/refresh")
+async def force_refresh():
+    await refresh_feed()
+    return {"count": len(get_cached_jobs())}

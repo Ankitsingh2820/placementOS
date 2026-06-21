@@ -1,9 +1,20 @@
 import os
+import re
 import json
 import asyncio
 import hashlib
 import feedparser
 import httpx
+from html import unescape
+from datetime import datetime, timezone
+import time as _time
+
+
+def _strip_html(text: str) -> str:
+    text = unescape(text or "")
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    return text.strip()
 
 _cache: list[dict] = []
 _lock = asyncio.Lock()
@@ -70,6 +81,27 @@ def _job_id(url: str) -> str:
     return hashlib.md5(url.encode()).hexdigest()[:10]
 
 
+def _iso_date(raw_str: str = "", parsed_tuple=None) -> str:
+    """Return YYYY-MM-DD from either a parsed time tuple or a raw date string."""
+    if parsed_tuple:
+        try:
+            return datetime(*parsed_tuple[:6], tzinfo=timezone.utc).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+    if raw_str:
+        for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(raw_str[:19], fmt[:len(raw_str[:19])]).strftime("%Y-%m-%d")
+            except Exception:
+                pass
+        # Try parsing ISO with offset e.g. 2026-06-19T12:00:00+00:00
+        try:
+            return raw_str[:10]
+        except Exception:
+            pass
+    return ""
+
+
 def _parse_rss(board: dict, content: str) -> list[dict]:
     feed = feedparser.parse(content)
     jobs = []
@@ -83,10 +115,10 @@ def _parse_rss(board: dict, content: str) -> list[dict]:
             "url": entry.get("link", ""),
             "tags": [],
             "salary": "",
-            "posted_at": entry.get("published", ""),
+            "posted_at": _iso_date(entry.get("published", ""), entry.get("published_parsed")),
             "eligibility": tag_eligibility(text),
             "work_type": tag_work_type(text),
-            "description": entry.get("summary", "")[:500],
+            "description": _strip_html(entry.get("summary", ""))[:1000],
         })
     return jobs
 
@@ -109,10 +141,10 @@ def _parse_remoteok(board: dict, data: list) -> list[dict]:
             "url": item.get("url", ""),
             "tags": item.get("tags", [])[:5],
             "salary": salary,
-            "posted_at": item.get("date", ""),
+            "posted_at": _iso_date(item.get("date", "")),
             "eligibility": tag_eligibility(text),
             "work_type": tag_work_type(text),
-            "description": item.get("description", "")[:500],
+            "description": _strip_html(item.get("description", ""))[:1000],
         })
     return jobs
 
@@ -129,10 +161,10 @@ def _parse_remotive(board: dict, data: dict) -> list[dict]:
             "url": item.get("url", ""),
             "tags": item.get("tags", [])[:5],
             "salary": item.get("salary", ""),
-            "posted_at": item.get("publication_date", ""),
+            "posted_at": _iso_date(item.get("publication_date", "")),
             "eligibility": tag_eligibility(text),
             "work_type": tag_work_type(text),
-            "description": item.get("description", "")[:500],
+            "description": _strip_html(item.get("description", ""))[:1000],
         })
     return jobs
 
@@ -152,10 +184,10 @@ def _parse_jsearch(board: dict, data: dict) -> list[dict]:
             "url": item.get("job_apply_link", ""),
             "tags": (item.get("job_required_skills") or [])[:5],
             "salary": salary,
-            "posted_at": item.get("job_posted_at_datetime_utc", ""),
+            "posted_at": _iso_date(item.get("job_posted_at_datetime_utc", "")),
             "eligibility": tag_eligibility(text),
             "work_type": tag_work_type(text),
-            "description": (item.get("job_description") or "")[:500],
+            "description": _strip_html(item.get("job_description") or "")[:1000],
         })
     return jobs
 
@@ -174,10 +206,10 @@ def _parse_adzuna(board: dict, data: dict) -> list[dict]:
             "url": item.get("redirect_url", ""),
             "tags": [item["category"]["tag"]] if item.get("category", {}).get("tag") else [],
             "salary": salary,
-            "posted_at": item.get("created", ""),
+            "posted_at": _iso_date(item.get("created", "")),
             "eligibility": tag_eligibility(text),
             "work_type": tag_work_type(text),
-            "description": (item.get("description") or "")[:500],
+            "description": _strip_html(item.get("description") or "")[:1000],
         })
     return jobs
 

@@ -16,7 +16,7 @@ from services.feed import refresh_feed
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await refresh_feed()
-    interval = int(os.getenv("FEED_REFRESH_MINUTES", "120")) * 60
+    interval = int(os.getenv("FEED_REFRESH_MINUTES", "30")) * 60
 
     async def _loop():
         while True:
