@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Briefcase, Mic2, LayoutList, FileText, Zap } from 'lucide-react'
+import { Briefcase, Mic2, LayoutList, FileText, Zap, Search } from 'lucide-react'
 
 const nav = [
   { to: '/',          icon: Briefcase,  label: 'Jobs',           end: true },
@@ -7,6 +7,7 @@ const nav = [
   { to: '/tailor',    icon: FileText,   label: 'Resume Tailor',  end: false },
   { to: '/coach',     icon: Zap,        label: 'App Coach',      end: false },
   { to: '/tracker',   icon: LayoutList, label: 'Tracker',        end: false },
+  { to: '/scout',     icon: Search,     label: 'Job Scout',      end: false },
 ]
 
 export function Sidebar() {
