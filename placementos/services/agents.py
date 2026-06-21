@@ -1,4 +1,5 @@
 import json
+import re
 from services.claude import get_client, MODEL
 
 FIT_PROMPT = """\
@@ -120,9 +121,8 @@ Return ONLY a valid JSON array of exactly 3 best matches — no markdown:
 def _parse_json(raw: str, fallback):
     raw = raw.strip()
     if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
+        raw = re.sub(r'^```(?:json)?\s*', '', raw)
+        raw = re.sub(r'\s*```$', '', raw)
     try:
         return json.loads(raw.strip())
     except Exception:
@@ -146,8 +146,11 @@ async def analyze_fit(resume: str, jd: str) -> dict:
 
 
 async def generate_followup(role: str, company: str, outreach_snippet: str) -> str:
-    raw = await _call(FOLLOWUP_PROMPT.format(role=role, company=company, outreach_snippet=outreach_snippet[:200]), max_tokens=200)
-    return raw.strip()
+    try:
+        raw = await _call(FOLLOWUP_PROMPT.format(role=role, company=company, outreach_snippet=outreach_snippet[:200]), max_tokens=200)
+        return raw.strip()
+    except Exception:
+        return ""
 
 
 async def scout_jobs(query: str, jobs: list) -> list:

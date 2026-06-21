@@ -71,6 +71,24 @@ async def test_analyze_gap_returns_plan():
 
 
 @pytest.mark.asyncio
+async def test_generate_followup_returns_string():
+    with patch("services.agents.get_client", return_value=_mock_groq("Following up on my application for Senior Engineer at Acme.")):
+        from services.agents import generate_followup
+        result = await generate_followup("Senior Engineer", "Acme", "Hi Acme, I applied...")
+    assert isinstance(result, str)
+    assert len(result) > 0
+
+@pytest.mark.asyncio
+async def test_generate_followup_fallback_on_error():
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(side_effect=Exception("network error"))
+    with patch("services.agents.get_client", return_value=mock_client):
+        from services.agents import generate_followup
+        result = await generate_followup("Engineer", "Acme", "Hi...")
+    assert result == ""
+
+
+@pytest.mark.asyncio
 async def test_generate_digest_returns_three():
     jobs = [{"id": f"j{i}", "title": f"Job {i}", "company": "Co", "description": "remote", "tags": [], "url": f"https://ex.com/{i}", "eligibility": "green", "work_type": "remote"} for i in range(5)]
     payload = json.dumps([
