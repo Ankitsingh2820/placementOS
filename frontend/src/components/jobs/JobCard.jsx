@@ -1,28 +1,49 @@
 import { useInterviewContext } from '../../context/InterviewContext'
 import { useNavigate } from 'react-router-dom'
-import { ExternalLink, Bookmark, Zap, FileText, Mic2 } from 'lucide-react'
+import { ExternalLink, Bookmark, Zap, FileText, Mic2, MapPin, Clock } from 'lucide-react'
 
 const eligConfig = {
-  green:  { label: 'Worldwide',      cls: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
-  yellow: { label: 'Check timezone', cls: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'       },
-  red:    { label: 'Region-locked',  cls: 'bg-red-50 text-red-600 ring-1 ring-red-200'             },
+  green:  { label: 'Worldwide',  dot: 'bg-emerald-400', cls: 'text-emerald-700' },
+  yellow: { label: 'Timezone',   dot: 'bg-amber-400',   cls: 'text-amber-700'   },
+  red:    { label: 'Restricted', dot: 'bg-red-400',     cls: 'text-red-600'     },
 }
 const wtConfig = {
-  remote: { label: 'Remote', cls: 'bg-blue-50 text-blue-700'     },
-  hybrid: { label: 'Hybrid', cls: 'bg-violet-50 text-violet-700' },
-  onsite: { label: 'Onsite', cls: 'bg-slate-100 text-slate-600'  },
+  remote: { label: 'Remote', icon: Zap,    cls: 'text-blue-600 bg-blue-50'     },
+  hybrid: { label: 'Hybrid', icon: Clock,  cls: 'text-violet-600 bg-violet-50' },
+  onsite: { label: 'Onsite', icon: MapPin, cls: 'text-slate-600 bg-slate-100'  },
 }
-const avatarColors = [
-  'bg-blue-500','bg-violet-500','bg-emerald-500','bg-orange-500',
-  'bg-pink-500', 'bg-indigo-500','bg-teal-500',  'bg-rose-500',
+const avatarPalette = [
+  ['#3B82F6','#1D4ED8'], ['#8B5CF6','#6D28D9'], ['#10B981','#059669'],
+  ['#F97316','#C2410C'], ['#EC4899','#BE185D'], ['#6366F1','#4338CA'],
+  ['#14B8A6','#0F766E'], ['#F43F5E','#BE123C'],
 ]
 
 function CompanyAvatar({ name }) {
   const letter = (name || '?')[0].toUpperCase()
-  const color  = avatarColors[(name || '').charCodeAt(0) % avatarColors.length]
+  const [from, to] = avatarPalette[(name || '').charCodeAt(0) % avatarPalette.length]
   return (
-    <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center shrink-0 shadow-sm`}>
-      <span className="text-white font-bold text-sm">{letter}</span>
+    <div className="w-11 h-11 rounded-2xl shrink-0 flex items-center justify-center shadow-sm"
+         style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}>
+      <span className="text-white font-bold text-base">{letter}</span>
+    </div>
+  )
+}
+
+function MatchRing({ score }) {
+  if (!score) return null
+  const color = score >= 60 ? '#10B981' : score >= 30 ? '#3B82F6' : '#94A3B8'
+  const label = score >= 60 ? 'Strong' : score >= 30 ? 'Good' : 'Low'
+  return (
+    <div className="flex flex-col items-center gap-0.5 shrink-0">
+      <svg width="36" height="36" viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r="14" fill="none" stroke="#F1F5F9" strokeWidth="3" />
+        <circle cx="18" cy="18" r="14" fill="none" stroke={color} strokeWidth="3"
+          strokeDasharray={`${(score / 100) * 87.96} 87.96`}
+          strokeLinecap="round"
+          transform="rotate(-90 18 18)" />
+        <text x="18" y="22" textAnchor="middle" fontSize="9" fontWeight="700" fill={color}>{score}</text>
+      </svg>
+      <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color }}>{label}</span>
     </div>
   )
 }
@@ -32,91 +53,110 @@ export function JobCard({ job, matchScore, onSave }) {
   const navigate = useNavigate()
   const elig = eligConfig[job.eligibility] || eligConfig.green
   const wt   = wtConfig[job.work_type]    || wtConfig.remote
-  const isHighMatch = matchScore >= 60
+  const WtIcon = wt.icon
 
   function handlePrep()   { setCurrentJob(job); navigate('/interview') }
   function handleTailor() { setCurrentJob(job); navigate('/tailor') }
   function handleCoach()  { setCurrentJob(job); navigate('/coach') }
 
   return (
-    <div className={`bg-white rounded-2xl border flex flex-col overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-200 animate-fade-in ${
-      isHighMatch ? 'border-primary/30' : 'border-slate-200'
+    <div className={`group bg-white rounded-2xl border flex flex-col overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 animate-fade-in ${
+      matchScore >= 60 ? 'border-emerald-200' : 'border-slate-200'
     }`}>
-      {isHighMatch && <div className="h-0.5 bg-gradient-primary" />}
 
-      <div className="p-4 flex flex-col gap-3 flex-1">
-        {/* Header row */}
+      {/* Card body */}
+      <div className="p-5 flex flex-col gap-4 flex-1">
+
+        {/* Header: avatar + meta + match ring */}
         <div className="flex items-start gap-3">
           <CompanyAvatar name={job.company} />
+
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2">{job.title}</h3>
-            <p className="text-slate-400 text-xs mt-0.5 font-medium">{job.company}</p>
+            <h3 className="font-bold text-slate-900 text-[15px] leading-snug line-clamp-2 mb-1">
+              {job.title}
+            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-slate-500 text-xs font-medium">{job.company}</span>
+              {job.posted_at && (
+                <>
+                  <span className="text-slate-300 text-xs">·</span>
+                  <span className="text-slate-400 text-xs">{job.posted_at.slice(0, 10)}</span>
+                </>
+              )}
+            </div>
           </div>
+
+          <MatchRing score={matchScore} />
         </div>
 
-        {/* Badges */}
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${elig.cls}`}>{elig.label}</span>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${wt.cls}`}>{wt.label}</span>
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-50 text-slate-500">{job.source}</span>
-          {matchScore > 0 && (
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ring-1 ${
-              isHighMatch          ? 'text-emerald-700 bg-emerald-50 ring-emerald-200' :
-              matchScore >= 30     ? 'text-blue-700 bg-blue-50 ring-blue-200' :
-                                     'text-slate-500 bg-slate-50 ring-slate-200'
-            }`}>{matchScore}% match</span>
-          )}
+        {/* Type + eligibility row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg ${wt.cls}`}>
+            <WtIcon size={11} />
+            {wt.label}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg">
+            <span className={`w-1.5 h-1.5 rounded-full ${elig.dot}`} />
+            <span className={elig.cls}>{elig.label}</span>
+          </span>
+          <span className="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">{job.source}</span>
         </div>
 
-        {/* Description preview */}
+        {/* Description */}
         {job.description && (
-          <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{job.description}</p>
+          <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">{job.description}</p>
         )}
 
-        {/* Tags */}
+        {/* Tech tags */}
         {job.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {job.tags.slice(0, 4).map(t => (
-              <span key={t} className="text-[11px] font-mono bg-slate-50 text-slate-500 px-2 py-0.5 rounded-md">{t}</span>
+          <div className="flex flex-wrap gap-1.5">
+            {job.tags.slice(0, 5).map(t => (
+              <span key={t}
+                className="text-[11px] font-mono bg-slate-50 border border-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
+                {t}
+              </span>
             ))}
           </div>
         )}
 
-        {/* Salary + date */}
-        <div className="flex items-center justify-between mt-auto">
-          {job.salary
-            ? <p className="text-sm font-semibold text-mint">{job.salary}</p>
-            : <span />}
-          {job.posted_at && <p className="text-[11px] text-slate-400">{job.posted_at.slice(0,10)}</p>}
-        </div>
+        {/* Salary */}
+        {job.salary && (
+          <div className="mt-auto">
+            <span className="inline-block text-sm font-bold text-mint bg-mint-light px-3 py-1 rounded-lg">
+              {job.salary}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Action footer */}
-      <div className="border-t border-slate-100 px-4 py-3 flex gap-2 bg-slate-50/60">
-        <button onClick={handlePrep} title="Interview Prep"
-          className="flex items-center gap-1.5 flex-1 justify-center text-xs font-semibold bg-primary hover:bg-primary-hover text-white px-2 py-2 rounded-xl transition-colors">
-          <Mic2 size={12} /> Prep
+      {/* Action row */}
+      <div className="px-5 py-3.5 border-t border-slate-100 flex items-center gap-2">
+        {/* Primary */}
+        <button onClick={handlePrep}
+          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl transition-colors">
+          <Mic2 size={13} />
+          Prep Interview
         </button>
+
+        {/* Secondary icon buttons */}
         <button onClick={handleTailor} title="Tailor Resume"
-          className="flex items-center gap-1.5 flex-1 justify-center text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-2 rounded-xl transition-colors">
-          <FileText size={12} /> Tailor
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 border border-slate-200 transition-colors">
+          <FileText size={14} />
         </button>
-        <button onClick={handleCoach} title="Full Package — fit + tailor + outreach"
-          className="flex items-center gap-1.5 flex-1 justify-center text-xs font-semibold bg-mint hover:bg-mint-hover text-white px-2 py-2 rounded-xl transition-colors">
-          <Zap size={12} /> Coach
+        <button onClick={handleCoach} title="Full Coach Package"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-mint-light text-slate-500 hover:text-mint border border-slate-200 transition-colors">
+          <Zap size={14} />
         </button>
-        <div className="flex gap-1">
-          {job.url && (
-            <a href={job.url} target="_blank" rel="noopener noreferrer" title="Apply"
-              className="flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-light bg-white border border-slate-200 w-8 h-8 rounded-xl transition-colors">
-              <ExternalLink size={13} />
-            </a>
-          )}
-          <button onClick={() => onSave(job)} title="Save to tracker"
-            className="flex items-center justify-center text-slate-400 hover:text-mint hover:bg-mint-light bg-white border border-slate-200 w-8 h-8 rounded-xl transition-colors">
-            <Bookmark size={13} />
-          </button>
-        </div>
+        {job.url && (
+          <a href={job.url} target="_blank" rel="noopener noreferrer" title="Apply"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-primary-light text-slate-500 hover:text-primary border border-slate-200 transition-colors">
+            <ExternalLink size={14} />
+          </a>
+        )}
+        <button onClick={() => onSave(job)} title="Save to tracker"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-mint-light text-slate-400 hover:text-mint border border-slate-200 transition-colors">
+          <Bookmark size={14} />
+        </button>
       </div>
     </div>
   )
