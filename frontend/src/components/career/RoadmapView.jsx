@@ -32,7 +32,9 @@ export function RoadmapView({ career }) {
   }
 
   function switchTrack() {
-    resetTrack()
+    if (window.confirm('Switch track? Your current roadmap and progress will be cleared.')) {
+      resetTrack()
+    }
   }
 
   return (
