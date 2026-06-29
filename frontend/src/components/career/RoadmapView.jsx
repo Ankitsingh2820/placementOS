@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle2, Circle, Play, RotateCcw, Code2, Mic2, Zap, MessageCircle } from 'lucide-react'
-import { useCareer } from '../../hooks/useCareer'
 import { useInterviewContext } from '../../context/InterviewContext'
 
 const TOOL_META = {
@@ -10,8 +9,8 @@ const TOOL_META = {
   chat:      { icon: MessageCircle, label: 'Chat',          path: '/chat' },
 }
 
-export function RoadmapView({ onReset }) {
-  const { track, toggleStep, resetTrack, readiness, completed, totalSteps } = useCareer()
+export function RoadmapView({ career }) {
+  const { track, toggleStep, resetTrack, readiness, completed, totalSteps } = career
   const { setCurrentJob, setResumeText, setSeedChat } = useInterviewContext()
   const navigate = useNavigate()
 
@@ -25,7 +24,7 @@ export function RoadmapView({ onReset }) {
   function start(step) {
     setCurrentJob(job)
     if (track.resume) setResumeText(track.resume)
-    const meta = TOOL_META[step.tool]
+    const meta = TOOL_META[step.tool] || TOOL_META.chat
     if (step.tool === 'chat') {
       setSeedChat(step.config?.prompt || `Help me prepare for ${track.domain} interviews.`)
     }
@@ -34,7 +33,6 @@ export function RoadmapView({ onReset }) {
 
   function switchTrack() {
     resetTrack()
-    onReset?.()
   }
 
   return (

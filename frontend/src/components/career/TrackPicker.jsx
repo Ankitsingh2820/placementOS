@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Compass, Loader2, Sparkles } from 'lucide-react'
 import { generateRoadmap } from '../../lib/api'
-import { useCareer } from '../../hooks/useCareer'
-
 const SUGGESTED = [
   'Frontend Developer', 'Backend Engineer', 'Full-Stack Developer',
   'Data Analyst', 'Data Scientist', 'ML Engineer',
@@ -10,8 +8,7 @@ const SUGGESTED = [
 ]
 const LEVELS = ['Fresher', '0-2 yrs', 'Mid-level']
 
-export function TrackPicker({ onReady }) {
-  const { setTrack } = useCareer()
+export function TrackPicker({ setTrack }) {
   const [domain, setDomain]   = useState('')
   const [level, setLevel]     = useState('Fresher')
   const [resume, setResume]   = useState('')
@@ -25,7 +22,6 @@ export function TrackPicker({ onReady }) {
     try {
       const roadmap = await generateRoadmap({ domain: d, level })
       setTrack({ domain: d, level, resume, roadmap })
-      onReady?.()
     } catch {
       setError('Could not build your roadmap. Please try again.')
     } finally {
