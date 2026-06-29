@@ -69,3 +69,30 @@ async def test_generate_roadmap_malformed_json_raises():
         from services.career import generate_roadmap
         with pytest.raises(ValueError):
             await generate_roadmap("Data Analyst", "Fresher")
+
+
+from fastapi.testclient import TestClient
+
+
+def test_roadmap_endpoint_success():
+    with patch("routers.career.generate_roadmap", new=AsyncMock(return_value={"ok": True})):
+        from main import app
+        client = TestClient(app)
+        r = client.post("/career/roadmap", json={"domain": "Data Analyst", "level": "Fresher"})
+    assert r.status_code == 200
+    assert r.json() == {"ok": True}
+
+
+def test_roadmap_endpoint_blank_domain():
+    from main import app
+    client = TestClient(app)
+    r = client.post("/career/roadmap", json={"domain": "   ", "level": "Fresher"})
+    assert r.status_code == 400
+
+
+def test_roadmap_endpoint_generation_failure():
+    with patch("routers.career.generate_roadmap", new=AsyncMock(side_effect=ValueError("boom"))):
+        from main import app
+        client = TestClient(app)
+        r = client.post("/career/roadmap", json={"domain": "Data Analyst"})
+    assert r.status_code == 502
