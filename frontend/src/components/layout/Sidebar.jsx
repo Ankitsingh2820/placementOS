@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Briefcase, Mic2, LayoutList, FileText, Zap, Search, Cpu, MessageCircle, Code2 } from 'lucide-react'
+import { Briefcase, Mic2, LayoutList, FileText, Zap, Search, Cpu, MessageCircle, Code2, Compass } from 'lucide-react'
 
 const sections = [
   {
@@ -16,6 +16,7 @@ const sections = [
       { to: '/tailor',    icon: FileText,  label: 'Resume Tailor',  end: false },
       { to: '/coach',     icon: Zap,       label: 'App Coach',      end: false },
       { to: '/code',      icon: Code2,     label: 'Code Practice',  end: false },
+      { to: '/career',    icon: Compass,   label: 'Career Track',   end: false },
     ],
   },
   {

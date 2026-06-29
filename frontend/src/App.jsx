@@ -9,6 +9,7 @@ import { CoachPage } from './components/coach/CoachPage'
 import { ScoutPage } from './components/scout/ScoutPage'
 import { ChatPage } from './components/chat/ChatPage'
 import { CodePage } from './components/code/CodePage'
+import { CareerPage } from './components/career/CareerPage'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
               <Route path="/scout"     element={<ScoutPage />} />
               <Route path="/chat"      element={<ChatPage />} />
               <Route path="/code"      element={<CodePage />} />
+              <Route path="/career"    element={<CareerPage />} />
               <Route path="*"          element={<Navigate to="/" replace />} />
             </Routes>
           </main>
