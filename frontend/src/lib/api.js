@@ -186,3 +186,13 @@ export async function fetchHint({ problem, code, language }) {
   if (!r.ok) throw new Error('Hint request failed')
   return r.json()
 }
+
+export async function generateRoadmap({ domain, level }) {
+  const r = await fetch('/career/roadmap', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domain, level }),
+  })
+  if (!r.ok) throw new Error('Could not build roadmap')
+  return r.json()
+}

@@ -18,6 +18,7 @@ export default defineConfig({
       '/scout':       'http://localhost:8000',
       '/chat':        'http://localhost:8000',
       '/code':        'http://localhost:8000',
+      '/career':      'http://localhost:8000',
     },
   },
   build: {
