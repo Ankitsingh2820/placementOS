@@ -62,12 +62,20 @@ function MessageBubble({ msg }) {
 }
 
 export function ChatPage() {
-  const { resumeText, currentJob } = useInterviewContext()
+  const { resumeText, currentJob, seedChat, setSeedChat } = useInterviewContext()
   const [messages, setMessages]   = useState([])
   const [input, setInput]         = useState('')
   const [loading, setLoading]     = useState(false)
   const bottomRef = useRef(null)
   const inputRef  = useRef(null)
+
+  useEffect(() => {
+    if (seedChat) {
+      setInput(seedChat)
+      setSeedChat('')
+      inputRef.current?.focus()
+    }
+  }, [seedChat])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
