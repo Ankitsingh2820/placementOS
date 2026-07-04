@@ -114,14 +114,14 @@ function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
           {/* Left — headline + steps */}
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-white tracking-tight leading-tight mb-2">
-              Find your next<br />
+              Land the remote role<br />
               <span className="text-transparent bg-clip-text"
                     style={{ backgroundImage: 'linear-gradient(90deg, #60A5FA, #34D399)' }}>
-                remote role
+                you actually want
               </span>
             </h1>
-            <p className="text-slate-400 text-sm mb-6 max-w-xs leading-relaxed">
-              India-friendly listings from WWR, RemoteOK, Remotive and more — ranked and prepped by AI.
+            <p className="text-slate-400 text-sm mb-6 max-w-sm leading-relaxed">
+              AI scans WWR, RemoteOK, LinkedIn &amp; more, ranks every job to your resume, then preps you to win the interview.
             </p>
 
             <div className="flex items-center gap-2 flex-wrap">
