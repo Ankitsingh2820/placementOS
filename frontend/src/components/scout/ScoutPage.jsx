@@ -105,7 +105,7 @@ export function ScoutPage() {
         <button onClick={handleDigest} disabled={status === 'loading-digest'}
           className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold px-8 py-3 rounded-xl text-sm transition-colors">
           <Sparkles size={16} />
-          {status === 'loading-digest' ? 'Scanning…' : 'Generate My Top 3 Matches'}
+          {status === 'loading-digest' ? 'Scanning…' : 'Generate My Top Matches'}
         </button>
         <p className="text-xs text-slate-600 mt-2">Uses your resume from Interview Prep to find the best fits</p>
       </div>
