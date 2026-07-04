@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Wand2, Copy, Check, GitCompare, FileText } from 'lucide-react'
+import { Wand2, Copy, Check, GitCompare, FileText, Download } from 'lucide-react'
 import { diffLines } from 'diff'
 import { streamTailor, getAtsKeywords } from '../../lib/api'
 import { useInterviewContext } from '../../context/InterviewContext'
@@ -82,6 +82,16 @@ export function ResumeTailorPage() {
   async function handleCopy() {
     await navigator.clipboard.writeText(output)
     setCopied(true); setTimeout(() => setCopied(false), 2000)
+  }
+
+  function handleDownload() {
+    const base = currentJob?.company ? `resume-${currentJob.company}` : 'tailored-resume'
+    const name = base.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([output], { type: 'text/plain;charset=utf-8' }))
+    a.download = `${name}.txt`
+    a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   const showOutput = output || status === 'loading'
@@ -193,10 +203,16 @@ export function ResumeTailorPage() {
               )}
             </div>
             {status === 'done' && (
-              <button onClick={handleCopy}
-                className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover font-medium transition-colors">
-                {copied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy</>}
-              </button>
+              <div className="flex items-center gap-3">
+                <button onClick={handleDownload}
+                  className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover font-medium transition-colors">
+                  <Download size={13} /> Download
+                </button>
+                <button onClick={handleCopy}
+                  className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover font-medium transition-colors">
+                  {copied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy</>}
+                </button>
+              </div>
             )}
           </div>
 
