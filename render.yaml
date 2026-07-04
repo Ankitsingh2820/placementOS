@@ -1,0 +1,22 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploy: Render Dashboard -> New -> Blueprint -> connect this repo.
+# Set the secret values (GROQ_API_KEY etc.) when prompted; they are never stored in the repo.
+services:
+  - type: web
+    name: placementos
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    branch: feat/career-track
+    healthCheckPath: /jobs
+    envVars:
+      - key: GROQ_API_KEY        # required — https://console.groq.com/keys
+        sync: false
+      - key: RAPIDAPI_KEY        # optional — enables JSearch (LinkedIn/Indeed/Glassdoor)
+        sync: false
+      - key: ADZUNA_APP_ID       # optional — enables Adzuna India
+        sync: false
+      - key: ADZUNA_APP_KEY      # optional — pairs with ADZUNA_APP_ID
+        sync: false
+      - key: FEED_REFRESH_MINUTES
+        value: "30"

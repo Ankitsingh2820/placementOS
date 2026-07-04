@@ -1,0 +1,24 @@
+# Dependencies / build artifacts (rebuilt inside the image)
+**/node_modules
+frontend/dist
+placementos/static_react
+
+# Python caches
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+
+# Secrets & local config (set as env vars on the host instead)
+.env
+**/.env
+
+# Repo / tooling / docs not needed at runtime
+.git
+.gitignore
+.superpowers
+.claude
+docs/
+*.pdf
+placementos/resumeformat/
+placementos/tests/
