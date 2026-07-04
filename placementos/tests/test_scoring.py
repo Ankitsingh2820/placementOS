@@ -33,10 +33,29 @@ async def test_rank_jobs_filters_entries_without_id():
     assert out[0]["score"] == 90
 
 
+def _sent_prompt(mock_client) -> str:
+    """The prompt string rank_jobs sent to Groq via the mocked client."""
+    return mock_client.chat.completions.create.call_args.kwargs["messages"][0]["content"]
+
+
 @pytest.mark.asyncio
-async def test_rank_jobs_with_action_passes_action_through():
+async def test_rank_jobs_with_action_requests_and_passes_action():
     payload = json.dumps([{"job_id": "j0", "score": 88, "reason": "fit", "action": "add metrics"}])
-    with patch("services.agents.get_client", return_value=_mock_groq(payload)):
+    mock = _mock_groq(payload)
+    with patch("services.agents.get_client", return_value=mock):
         from services.agents import rank_jobs
         out = await rank_jobs("resume text", JOBS, top_k=10, with_action=True)
+    # action passes through to the result
     assert out[0]["action"] == "add metrics"
+    # and with_action=True actually injects the action field into the prompt
+    assert '"action"' in _sent_prompt(mock)
+
+
+@pytest.mark.asyncio
+async def test_rank_jobs_without_action_omits_action_field_from_prompt():
+    payload = json.dumps([{"job_id": "j0", "score": 88, "reason": "fit"}])
+    mock = _mock_groq(payload)
+    with patch("services.agents.get_client", return_value=mock):
+        from services.agents import rank_jobs
+        await rank_jobs("resume text", JOBS, top_k=10, with_action=False)
+    assert '"action"' not in _sent_prompt(mock)
