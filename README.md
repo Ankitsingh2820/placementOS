@@ -2,6 +2,9 @@
 
 **Find it → Prep → Get it.** An AI-powered job-search and placement-prep platform for remote and India-friendly roles. PlacementOS aggregates live job listings, ranks them against your resume, and then preps you end-to-end — mock interviews, resume tailoring, cold outreach, coding practice, and a domain-specific career roadmap — all powered by [Groq](https://groq.com/) running `llama-3.3-70b-versatile`.
 
+🔗 **Live demo:** https://placementos-k6zc.onrender.com
+_(Hosted on Render's free tier — the first request after a period of inactivity may take ~30–60s to wake the server.)_
+
 ---
 
 ## Table of Contents
