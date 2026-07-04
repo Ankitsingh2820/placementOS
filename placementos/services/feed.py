@@ -1,13 +1,16 @@
-import os
+﻿import os
 import re
 import json
 import asyncio
 import hashlib
+import logging
 import feedparser
 import httpx
 from html import unescape
 from datetime import datetime, timezone
 import time as _time
+
+_log = logging.getLogger("feed")
 
 
 def _strip_html(text: str) -> str:
@@ -19,19 +22,30 @@ def _strip_html(text: str) -> str:
 _cache: list[dict] = []
 _lock = asyncio.Lock()
 
-INCLUDE = [
-    "worldwide", "anywhere", "global team", "hire globally",
-    "async", "india ok", "work from anywhere", "all timezones",
-    "fully remote", "globally", "open to all", "international",
+INDIA_LOCATIONS = [
+    "india", "bangalore", "bengaluru", "mumbai", "delhi", "new delhi",
+    "hyderabad", "pune", "chennai", "kolkata", "noida", "gurgaon",
+    "gurugram", "ahmedabad", "jaipur", "kochi", "trivandrum",
+    "thiruvananthapuram", "indore", "chandigarh", "nagpur", "surat",
+    "visakhapatnam", "vizag", "coimbatore", "bhubaneswar", "dehradun",
+    "lucknow", "bhopal", "vadodara", "patna", "ranchi", "guwahati",
 ]
-EXCLUDE = [
-    "us only", "usa only", "united states only", "must be based in",
-    "work authorization", "authorized to work", "onsite", "on-site",
-    "eu only", "europe only", "uk only", "canada only", "us citizen",
-    "us resident", "must reside",
-]
-TIMEZONE_SIGNALS = [
-    "pst", "est", "cst", "overlap", "pacific time", "eastern time", "central time",
+
+REMOTE_EXCLUDE = [
+    # explicit country/region restrictions
+    "us only", "usa only", "united states only",
+    "eu only", "europe only", "uk only", "canada only",
+    "australia only", "new zealand only",
+    # "remote - <region>" patterns (location-scoped remote roles)
+    "remote - us", "remote - usa", "remote - united states",
+    "remote - canada", "remote - uk", "remote - europe",
+    "remote - australia", "remote - germany", "remote - france",
+    "remote in the us", "remote in canada", "remote in the uk",
+    # citizenship / work auth
+    "us citizen", "us resident",
+    "must be based in", "must reside in",
+    "work authorization", "authorized to work",
+    "not available in india", "except india",
 ]
 
 
@@ -63,17 +77,17 @@ def tag_work_type(text: str) -> str:
     return "remote"  # default — our boards are remote-first
 
 
-def tag_eligibility(text: str) -> str:
+def tag_eligibility(text: str, work_type: str) -> str:
     t = text.lower()
-    for kw in EXCLUDE:
+    if work_type in ("onsite", "hybrid"):
+        for loc in INDIA_LOCATIONS:
+            if loc in t:
+                return "green"
+        return "red"
+    # remote: block only explicit region exclusions
+    for kw in REMOTE_EXCLUDE:
         if kw in t:
             return "red"
-    for kw in INCLUDE:
-        if kw in t:
-            return "green"
-    for kw in TIMEZONE_SIGNALS:
-        if kw in t:
-            return "yellow"
     return "green"
 
 
@@ -107,6 +121,7 @@ def _parse_rss(board: dict, content: str) -> list[dict]:
     jobs = []
     for entry in feed.entries[:30]:
         text = f"{entry.get('title', '')} {entry.get('summary', '')}"
+        work_type = tag_work_type(text)
         jobs.append({
             "id": _job_id(entry.get("link", entry.get("title", ""))),
             "title": entry.get("title", ""),
@@ -116,8 +131,8 @@ def _parse_rss(board: dict, content: str) -> list[dict]:
             "tags": [],
             "salary": "",
             "posted_at": _iso_date(entry.get("published", ""), entry.get("published_parsed")),
-            "eligibility": tag_eligibility(text),
-            "work_type": tag_work_type(text),
+            "eligibility": tag_eligibility(text, work_type),
+            "work_type": work_type,
             "description": _strip_html(entry.get("summary", ""))[:1000],
         })
     return jobs
@@ -133,6 +148,7 @@ def _parse_remoteok(board: dict, data: list) -> list[dict]:
         lo, hi = item.get("salary_min"), item.get("salary_max")
         if lo and hi:
             salary = f"${int(lo):,}–${int(hi):,}"
+        work_type = tag_work_type(text)
         jobs.append({
             "id": _job_id(item.get("url", str(item.get("id", "")))),
             "title": item.get("position", ""),
@@ -142,8 +158,8 @@ def _parse_remoteok(board: dict, data: list) -> list[dict]:
             "tags": item.get("tags", [])[:5],
             "salary": salary,
             "posted_at": _iso_date(item.get("date", "")),
-            "eligibility": tag_eligibility(text),
-            "work_type": tag_work_type(text),
+            "eligibility": tag_eligibility(text, work_type),
+            "work_type": work_type,
             "description": _strip_html(item.get("description", ""))[:1000],
         })
     return jobs
@@ -153,6 +169,7 @@ def _parse_remotive(board: dict, data: dict) -> list[dict]:
     jobs = []
     for item in data.get("jobs", [])[:30]:
         text = f"{item.get('title', '')} {item.get('description', '')}"
+        work_type = tag_work_type(text)
         jobs.append({
             "id": _job_id(item.get("url", str(item.get("id", "")))),
             "title": item.get("title", ""),
@@ -162,8 +179,8 @@ def _parse_remotive(board: dict, data: dict) -> list[dict]:
             "tags": item.get("tags", [])[:5],
             "salary": item.get("salary", ""),
             "posted_at": _iso_date(item.get("publication_date", "")),
-            "eligibility": tag_eligibility(text),
-            "work_type": tag_work_type(text),
+            "eligibility": tag_eligibility(text, work_type),
+            "work_type": work_type,
             "description": _strip_html(item.get("description", ""))[:1000],
         })
     return jobs
@@ -171,11 +188,16 @@ def _parse_remotive(board: dict, data: dict) -> list[dict]:
 
 def _parse_jsearch(board: dict, data: dict) -> list[dict]:
     jobs = []
-    for item in data.get("data", [])[:30]:
+    raw = data.get("data", [])
+    # search-v2 nests the list under data.jobs; the old /search returned data as a list
+    if isinstance(raw, dict):
+        raw = raw.get("jobs", [])
+    for item in raw[:30]:
         text = f"{item.get('job_title', '')} {item.get('job_description', '')}"
         lo, hi = item.get("job_min_salary"), item.get("job_max_salary")
         curr = item.get("job_salary_currency", "USD")
         salary = f"{curr} {int(lo):,}–{int(hi):,}" if lo and hi else ""
+        work_type = tag_work_type(text)
         jobs.append({
             "id": _job_id(item.get("job_apply_link", str(item.get("job_id", "")))),
             "title": item.get("job_title", ""),
@@ -185,9 +207,32 @@ def _parse_jsearch(board: dict, data: dict) -> list[dict]:
             "tags": (item.get("job_required_skills") or [])[:5],
             "salary": salary,
             "posted_at": _iso_date(item.get("job_posted_at_datetime_utc", "")),
-            "eligibility": tag_eligibility(text),
-            "work_type": tag_work_type(text),
+            "eligibility": tag_eligibility(text, work_type),
+            "work_type": work_type,
             "description": _strip_html(item.get("job_description") or "")[:1000],
+        })
+    return jobs
+
+
+def _parse_workingnomads(board: dict, data: list) -> list[dict]:
+    jobs = []
+    for item in data[:30]:
+        if not isinstance(item, dict):
+            continue
+        text = f"{item.get('title', '')} {item.get('description', '')} {item.get('location', '')}"
+        work_type = tag_work_type(text)
+        jobs.append({
+            "id": _job_id(item.get("url", item.get("title", ""))),
+            "title": item.get("title", ""),
+            "company": item.get("company_name", ""),
+            "source": board["short"],
+            "url": item.get("url", ""),
+            "tags": [t.strip() for t in item.get("tags", "").split(",") if t.strip()][:5],
+            "salary": "",
+            "posted_at": _iso_date(item.get("pub_date", "")),
+            "eligibility": tag_eligibility(text, work_type),
+            "work_type": work_type,
+            "description": _strip_html(item.get("description", ""))[:1000],
         })
     return jobs
 
@@ -198,6 +243,7 @@ def _parse_adzuna(board: dict, data: dict) -> list[dict]:
         text = f"{item.get('title', '')} {item.get('description', '')}"
         lo, hi = item.get("salary_min"), item.get("salary_max")
         salary = f"₹{int(lo):,}–₹{int(hi):,}" if lo and hi else ""
+        work_type = tag_work_type(text)
         jobs.append({
             "id": _job_id(item.get("redirect_url", str(item.get("id", "")))),
             "title": item.get("title", ""),
@@ -207,8 +253,8 @@ def _parse_adzuna(board: dict, data: dict) -> list[dict]:
             "tags": [item["category"]["tag"]] if item.get("category", {}).get("tag") else [],
             "salary": salary,
             "posted_at": _iso_date(item.get("created", "")),
-            "eligibility": tag_eligibility(text),
-            "work_type": tag_work_type(text),
+            "eligibility": tag_eligibility(text, work_type),
+            "work_type": work_type,
             "description": _strip_html(item.get("description") or "")[:1000],
         })
     return jobs
@@ -237,7 +283,9 @@ async def _fetch_board(client: httpx.AsyncClient, board: dict) -> list[dict]:
         if board["type"] == "rss":
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
             headers["Accept"] = "application/rss+xml, application/xml, text/xml, */*"
-        r = await client.get(board["url"], timeout=15, headers=headers, params=params, follow_redirects=True)
+        # Merge auth params into the URL's existing query (httpx's params= would REPLACE it)
+        url = httpx.URL(board["url"]).copy_merge_params(params)
+        r = await client.get(url, timeout=15, headers=headers, follow_redirects=True)
         r.raise_for_status()
         if board["type"] == "rss":
             return _parse_rss(board, r.content)  # bytes avoids surrogate encoding issues
@@ -249,6 +297,8 @@ async def _fetch_board(client: httpx.AsyncClient, board: dict) -> list[dict]:
             return _parse_jsearch(board, r.json())
         elif board["type"] == "adzuna_json":
             return _parse_adzuna(board, r.json())
+        elif board["type"] == "workingnomads_json":
+            return _parse_workingnomads(board, r.json())
     except Exception as _e:
         import logging
         logging.getLogger("feed").warning("Board %s failed: %s", board.get("short"), _e)
@@ -256,7 +306,46 @@ async def _fetch_board(client: httpx.AsyncClient, board: dict) -> list[dict]:
     return []
 
 
+def _is_english(text: str) -> bool:
+    if not text or len(text) < 20:
+        return True
+    try:
+        from langdetect import detect, LangDetectException
+        return detect(text) == "en"
+    except Exception:
+        return True  # can't detect — assume English
+
+
+async def _translate_job(client, job: dict) -> dict:
+    from services.claude import MODEL
+    try:
+        resp = await client.chat.completions.create(
+            model=MODEL,
+            messages=[{
+                "role": "user",
+                "content": (
+                    "Translate the job title and description below to English. "
+                    "Return only valid JSON with keys \"title\" and \"description\". No markdown.\n\n"
+                    f"Title: {job['title']}\n\nDescription: {job['description']}"
+                ),
+            }],
+            temperature=0,
+            max_tokens=900,
+        )
+        raw = resp.choices[0].message.content.strip()
+        data = json.loads(raw)
+        job = dict(job)
+        if data.get("title"):
+            job["title"] = data["title"]
+        if data.get("description"):
+            job["description"] = data["description"][:1000]
+    except Exception as e:
+        _log.warning("Translation failed for %s: %s", job.get("id"), e)
+    return job
+
+
 async def refresh_feed() -> None:
+    from services.claude import get_client
     boards_path = os.path.join(os.path.dirname(__file__), "../data/boards.json")
     with open(boards_path) as f:
         boards = json.load(f)
@@ -265,6 +354,20 @@ async def refresh_feed() -> None:
     jobs: list[dict] = []
     for batch in results:
         jobs.extend(batch)
+
+    # Translate non-English job titles + descriptions to English (sequential to avoid RPM limits)
+    non_en_idx = [i for i, j in enumerate(jobs) if not _is_english(j.get("description", ""))]
+    if non_en_idx:
+        _log.info("Translating %d non-English job(s) via Groq…", len(non_en_idx))
+        try:
+            groq = get_client()
+            for idx, i in enumerate(non_en_idx):
+                jobs[i] = await _translate_job(groq, jobs[i])
+                if idx < len(non_en_idx) - 1:
+                    await asyncio.sleep(2)  # stay within 30 RPM free-tier limit
+        except Exception as e:
+            _log.warning("Groq translation skipped: %s", e)
+
     async with _lock:
         _cache.clear()
         _cache.extend(jobs)
