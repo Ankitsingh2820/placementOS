@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useJobs } from '../../hooks/useJobs'
 import { useTracker } from '../../hooks/useTracker'
 import { JobFilters } from './JobFilters'
-import { JobCard } from './JobCard'
+import { JobCard, JobDetailDrawer } from './JobCard'
 import { parseResumePDF } from '../../lib/api'
 import {
   Briefcase, Wifi, Sparkles, ArrowRight,
@@ -203,6 +203,7 @@ function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
 export function JobsPage() {
   const { jobs, loading, filters, setFilters, matchScores, matchStatus, matchResume, clearMatch, refetch } = useJobs()
   const { addRow } = useTracker()
+  const [drawerJob, setDrawerJob] = useState(null)
 
   function handleSave(job) {
     const added = addRow(job)
@@ -237,10 +238,17 @@ export function JobsPage() {
       {!loading && jobs.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           {jobs.map(job => (
-            <JobCard key={job.id} job={job} matchScore={matchScores[job.id] || 0} onSave={handleSave} />
+            <JobCard key={job.id} job={job} matchScore={matchScores[job.id] || 0} onSave={handleSave} onOpen={setDrawerJob} />
           ))}
         </div>
       )}
+
+      <JobDetailDrawer
+        job={drawerJob}
+        matchScore={drawerJob ? (matchScores[drawerJob.id] || 0) : 0}
+        onClose={() => setDrawerJob(null)}
+        onSave={handleSave}
+      />
     </div>
   )
 }

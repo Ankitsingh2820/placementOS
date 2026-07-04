@@ -1,16 +1,16 @@
 import { useInterviewContext } from '../../context/InterviewContext'
 import { useNavigate } from 'react-router-dom'
-import { ExternalLink, Bookmark, Zap, FileText, Mic2, MapPin, Clock, Code2 } from 'lucide-react'
+import { ExternalLink, Bookmark, Zap, FileText, Mic2, MapPin, Clock, Code2, X, Calendar, Building2 } from 'lucide-react'
 
 const eligConfig = {
-  green:  { label: 'Worldwide',  dot: 'bg-emerald-400', cls: 'text-emerald-400' },
-  yellow: { label: 'Timezone',   dot: 'bg-amber-400',   cls: 'text-amber-400'   },
-  red:    { label: 'Restricted', dot: 'bg-red-400',     cls: 'text-red-400'     },
+  green:  { label: 'India OK',    dot: 'bg-emerald-400', cls: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-500/30' },
+  yellow: { label: 'Check TZ',    dot: 'bg-amber-400',   cls: 'text-amber-400',   bg: 'bg-amber-400/10 border-amber-500/30'     },
+  red:    { label: 'Restricted',  dot: 'bg-red-400',     cls: 'text-red-400',     bg: 'bg-red-400/10 border-red-500/30'         },
 }
 const wtConfig = {
-  remote: { label: 'Remote', icon: Zap,    cls: 'text-blue-400 bg-blue-400/10'     },
-  hybrid: { label: 'Hybrid', icon: Clock,  cls: 'text-violet-400 bg-violet-400/10' },
-  onsite: { label: 'Onsite', icon: MapPin, cls: 'text-slate-400 bg-slate-400/10'   },
+  remote: { label: 'Remote', icon: Zap,    cls: 'text-blue-400 bg-blue-400/10',       border: 'border-blue-500/30'   },
+  hybrid: { label: 'Hybrid', icon: Clock,  cls: 'text-violet-400 bg-violet-400/10',   border: 'border-violet-500/30' },
+  onsite: { label: 'Onsite', icon: MapPin, cls: 'text-slate-400 bg-slate-400/10',     border: 'border-slate-500/30'  },
 }
 const avatarPalette = [
   ['#3B82F6','#1D4ED8'], ['#8B5CF6','#6D28D9'], ['#10B981','#059669'],
@@ -18,13 +18,14 @@ const avatarPalette = [
   ['#14B8A6','#0F766E'], ['#F43F5E','#BE123C'],
 ]
 
-function CompanyAvatar({ name }) {
+function CompanyAvatar({ name, size = 'md' }) {
   const letter = (name || '?')[0].toUpperCase()
   const [from, to] = avatarPalette[(name || '').charCodeAt(0) % avatarPalette.length]
+  const dim = size === 'lg' ? 'w-14 h-14 rounded-2xl text-xl' : 'w-11 h-11 rounded-2xl text-base'
   return (
-    <div className="w-11 h-11 rounded-2xl shrink-0 flex items-center justify-center"
+    <div className={`${dim} shrink-0 flex items-center justify-center`}
          style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}>
-      <span className="text-white font-bold text-base">{letter}</span>
+      <span className="text-white font-bold">{letter}</span>
     </div>
   )
 }
@@ -47,7 +48,131 @@ function MatchRing({ score }) {
   )
 }
 
-export function JobCard({ job, matchScore, onSave }) {
+/* ─── Job Detail Drawer ──────────────────────────────────────── */
+export function JobDetailDrawer({ job, matchScore, onClose, onSave }) {
+  const { setCurrentJob } = useInterviewContext()
+  const navigate = useNavigate()
+  if (!job) return null
+
+  const elig   = eligConfig[job.eligibility] || eligConfig.green
+  const wt     = wtConfig[job.work_type]     || wtConfig.remote
+  const WtIcon = wt.icon
+
+  function go(path) { setCurrentJob(job); onClose(); navigate(path) }
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={onClose} />
+
+      {/* Panel */}
+      <div className="fixed right-0 top-0 h-full w-full max-w-xl z-50 flex flex-col"
+           style={{ background: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)' }}>
+
+        {/* Header */}
+        <div className="flex items-start gap-4 p-6 border-b border-white/8">
+          <CompanyAvatar name={job.company} size="lg" />
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-white leading-snug mb-1">{job.title}</h2>
+            <div className="flex items-center gap-2 flex-wrap text-sm text-slate-400">
+              <span className="flex items-center gap-1"><Building2 size={12} />{job.company}</span>
+              {job.posted_at && (
+                <>
+                  <span className="text-slate-600">·</span>
+                  <span className="flex items-center gap-1"><Calendar size={12} />{job.posted_at.slice(0, 10)}</span>
+                </>
+              )}
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-500 text-xs">{job.source}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <MatchRing score={matchScore} />
+            <button onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2">
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border ${wt.cls} ${wt.border}`}>
+              <WtIcon size={12} />{wt.label}
+            </span>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border ${elig.bg}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${elig.dot}`} />
+              <span className={elig.cls}>{elig.label}</span>
+            </span>
+            {job.salary && (
+              <span className="inline-flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl">
+                {job.salary}
+              </span>
+            )}
+          </div>
+
+          {/* Tags */}
+          {job.tags?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Skills</p>
+              <div className="flex flex-wrap gap-1.5">
+                {job.tags.map(t => (
+                  <span key={t} className="text-xs font-mono bg-white/5 border border-white/10 text-slate-300 px-2.5 py-1 rounded-lg">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Full JD */}
+          {job.description && (
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Job Description</p>
+              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{job.description}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Action footer */}
+        <div className="p-4 border-t border-white/8 bg-black/20 flex items-center gap-2">
+          <button onClick={() => go('/interview')}
+            className="flex-1 flex items-center justify-center gap-1.5 text-sm font-bold bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl transition-colors">
+            <Mic2 size={14} /> Prep Interview
+          </button>
+          <button onClick={() => go('/tailor')} title="Tailor Resume"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-colors">
+            <FileText size={15} />
+          </button>
+          <button onClick={() => go('/coach')} title="App Coach"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-emerald-400/15 text-slate-400 hover:text-emerald-400 border border-white/10 transition-colors">
+            <Zap size={15} />
+          </button>
+          <button onClick={() => go('/code')} title="Code Practice"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-violet-400/15 text-slate-400 hover:text-violet-400 border border-white/10 transition-colors">
+            <Code2 size={15} />
+          </button>
+          {job.url && (
+            <a href={job.url} target="_blank" rel="noopener noreferrer" title="Apply"
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 transition-colors">
+              <ExternalLink size={15} />
+            </a>
+          )}
+          <button onClick={() => { onSave(job); onClose() }} title="Save to tracker"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-colors">
+            <Bookmark size={15} />
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+/* ─── Job Card ───────────────────────────────────────────────── */
+export function JobCard({ job, matchScore, onSave, onOpen }) {
   const { setCurrentJob } = useInterviewContext()
   const navigate = useNavigate()
   const elig   = eligConfig[job.eligibility] || eligConfig.green
@@ -66,8 +191,8 @@ export function JobCard({ job, matchScore, onSave }) {
         : 'shadow-[0_2px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.4)] border border-slate-700/60'
     }`} style={{ background: 'linear-gradient(160deg, #1E293B 0%, #0F172A 100%)' }}>
 
-      {/* Card body */}
-      <div className="p-5 flex flex-col gap-4 flex-1">
+      {/* Clickable card body */}
+      <div className="p-5 flex flex-col gap-4 flex-1 cursor-pointer" onClick={() => onOpen(job)}>
 
         {/* Header */}
         <div className="flex items-start gap-3">
@@ -127,8 +252,9 @@ export function JobCard({ job, matchScore, onSave }) {
         )}
       </div>
 
-      {/* Action row */}
-      <div className="px-5 py-3.5 border-t border-white/5 bg-black/20 flex items-center gap-2">
+      {/* Action row — clicks don't bubble to card body */}
+      <div className="px-5 py-3.5 border-t border-white/5 bg-black/20 flex items-center gap-2"
+           onClick={e => e.stopPropagation()}>
         <button onClick={handlePrep}
           className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl transition-colors">
           <Mic2 size={13} /> Prep Interview
