@@ -58,24 +58,6 @@ Use only job_ids from the provided list. Rank by how well each job fits the crit
 
 _ACTION_FIELD = ',\n    "action": "one specific thing to do before applying"'
 
-SCOUT_PROMPT = """\
-A job seeker is looking for: "{query}"
-
-Available jobs (JSON):
-{jobs_json}
-
-Find the top 5 best matches. Return ONLY a valid JSON array — no markdown:
-[
-  {{
-    "job_id": "exact id from the list",
-    "score": 0,
-    "reason": "one sentence explaining the match"
-  }}
-]
-
-Use only job_ids from the provided list. Rank by how well each job matches the query.
-"""
-
 GAP_PROMPT = """\
 Analyze this mock interview scorecard against the job description. Identify gaps and create a study plan.
 
@@ -117,29 +99,6 @@ Return ONLY valid JSON — no markdown:
   "ats_score": 0
 }}
 """
-
-DIGEST_PROMPT = """\
-Match this candidate to the best available jobs.
-
-Candidate profile:
-{resume_summary}
-
-Available jobs (JSON):
-{jobs_json}
-
-Return ONLY a valid JSON array of exactly 3 best matches — no markdown:
-[
-  {{
-    "job_id": "exact id from the list",
-    "title": "job title",
-    "company": "company name",
-    "score": 0,
-    "reason": "one sentence why this is a great fit for this candidate",
-    "action": "one specific thing to do before applying"
-  }}
-]
-"""
-
 
 def _parse_json(raw: str, fallback):
     raw = raw.strip()
@@ -198,22 +157,11 @@ async def rank_jobs(criteria: str, jobs: list, top_k: int = 10, with_action: boo
 
 
 async def scout_jobs(query: str, jobs: list) -> list:
-    slim = [
-        {"job_id": j["id"], "title": j["title"], "company": j["company"],
-         "description": j.get("description", "")[:300], "tags": j.get("tags", []),
-         "work_type": j.get("work_type", ""), "eligibility": j.get("eligibility", "")}
-        for j in jobs[:60]
-    ]
-    jobs_json = json.dumps(slim)
-    if len(jobs_json) > 8000:
-        slim = slim[:max(1, 8000 * len(slim) // len(jobs_json))]
-        jobs_json = json.dumps(slim)
-    raw = await _call(SCOUT_PROMPT.format(query=query, jobs_json=jobs_json), max_tokens=1024)
-    results = _parse_json(raw, [])
+    ranked = await rank_jobs(query, jobs, top_k=5, with_action=False)
     job_map = {j["id"]: j for j in jobs}
     return [
         {"job": job_map[r["job_id"]], "score": r.get("score", 0), "reason": r.get("reason", "")}
-        for r in results if isinstance(r, dict) and r.get("job_id") in job_map
+        for r in ranked if r["job_id"] in job_map
     ]
 
 
@@ -228,19 +176,24 @@ async def analyze_ats(resume: str, jd: str) -> dict:
 
 
 async def generate_digest(resume: str, jobs: list) -> list:
-    slim = [
-        {"job_id": j["id"], "title": j["title"], "company": j["company"],
-         "description": j.get("description", "")[:300], "tags": j.get("tags", [])}
-        for j in jobs[:50]
-    ]
-    raw = await _call(DIGEST_PROMPT.format(resume_summary=resume[:1500], jobs_json=json.dumps(slim)[:8000]), max_tokens=1024)
-    results = _parse_json(raw, [])
+    ranked = await rank_jobs(resume, jobs, top_k=10, with_action=True)
     job_map = {j["id"]: j for j in jobs}
-    for item in results:
-        jid = item.get("job_id", "")
-        if jid in job_map:
-            item["url"] = job_map[jid].get("url", "")
-            item["eligibility"] = job_map[jid].get("eligibility", "")
-            item["work_type"] = job_map[jid].get("work_type", "")
-            item["description"] = job_map[jid].get("description", "")
+    results = []
+    for r in ranked:
+        jid = r.get("job_id", "")
+        if jid not in job_map:
+            continue
+        job = job_map[jid]
+        results.append({
+            "job_id": jid,
+            "title": job.get("title", ""),
+            "company": job.get("company", ""),
+            "score": r.get("score", 0),
+            "reason": r.get("reason", ""),
+            "action": r.get("action", ""),
+            "url": job.get("url", ""),
+            "eligibility": job.get("eligibility", ""),
+            "work_type": job.get("work_type", ""),
+            "description": job.get("description", ""),
+        })
     return results

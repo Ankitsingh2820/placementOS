@@ -59,3 +59,22 @@ async def test_rank_jobs_without_action_omits_action_field_from_prompt():
         from services.agents import rank_jobs
         await rank_jobs("resume text", JOBS, top_k=10, with_action=False)
     assert '"action"' not in _sent_prompt(mock)
+
+
+@pytest.mark.asyncio
+async def test_generate_digest_returns_up_to_ten():
+    jobs = [
+        {"id": f"j{i}", "title": f"Job {i}", "company": "Co", "description": "remote",
+         "tags": [], "url": f"https://ex.com/{i}", "eligibility": "green", "work_type": "remote"}
+        for i in range(12)
+    ]
+    payload = json.dumps([
+        {"job_id": f"j{i}", "score": 90 - i, "reason": "match", "action": "tailor"}
+        for i in range(10)
+    ])
+    with patch("services.agents.get_client", return_value=_mock_groq(payload)):
+        from services.agents import generate_digest
+        out = await generate_digest("python dev resume", jobs)
+    assert len(out) == 10
+    assert out[0]["url"] == "https://ex.com/0"
+    assert all("action" in r for r in out)
