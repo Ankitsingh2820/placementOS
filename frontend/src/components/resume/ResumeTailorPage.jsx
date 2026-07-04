@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
-import { Upload, Wand2, Copy, Check, GitCompare, FileText } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Wand2, Copy, Check, GitCompare, FileText } from 'lucide-react'
 import { diffLines } from 'diff'
-import { parseResumePDF, streamTailor, getAtsKeywords } from '../../lib/api'
+import { streamTailor, getAtsKeywords } from '../../lib/api'
 import { useInterviewContext } from '../../context/InterviewContext'
+import { ResumeInput } from '../common/ResumeInput'
 
 const labelCls = 'block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5'
 const textareaCls = 'w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30'
@@ -34,7 +35,6 @@ function DiffView({ original, tailored }) {
 
 export function ResumeTailorPage() {
   const { currentJob, resumeText } = useInterviewContext()
-  const [resume, setResume] = useState(resumeText || '')
   const [jd, setJd] = useState(
     currentJob ? `${currentJob.title} at ${currentJob.company}\n\n${currentJob.description || ''}` : ''
   )
@@ -48,31 +48,15 @@ export function ResumeTailorPage() {
       setJd(`${currentJob.title} at ${currentJob.company}\n\n${currentJob.description || ''}`)
     }
   }, [currentJob])
-  const [fileStatus, setFileStatus] = useState('')
   const [copied, setCopied] = useState(false)
   const [viewMode, setViewMode] = useState('plain')
-  const fileRef = useRef(null)
-
-  async function handleFile(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    setFileStatus('Parsing...')
-    try {
-      const data = await parseResumePDF(file)
-      setResume(data.text)
-      setFileStatus(`Loaded "${file.name}"`)
-    } catch (err) {
-      setFileStatus(err.message)
-    }
-    e.target.value = ''
-  }
 
   async function handleAts() {
-    if (!resume.trim()) { alert('Paste your resume first.'); return }
+    if (!resumeText.trim()) { alert('Paste your resume first.'); return }
     if (!jd.trim()) { alert('Paste a job description first.'); return }
     setAtsStatus('loading'); setAts(null)
     try {
-      const result = await getAtsKeywords({ resume, jd })
+      const result = await getAtsKeywords({ resume: resumeText, jd })
       setAts(result); setAtsStatus('done')
     } catch {
       setAtsStatus('idle')
@@ -80,11 +64,11 @@ export function ResumeTailorPage() {
   }
 
   async function handleTailor() {
-    if (!resume.trim()) { alert('Please paste your resume first.'); return }
+    if (!resumeText.trim()) { alert('Please paste your resume first.'); return }
     if (!jd.trim()) { alert('Please paste a job description first.'); return }
     setOutput(''); setStatus('loading'); setCopied(false); setViewMode('plain')
     try {
-      for await (const chunk of streamTailor({ resume, jd })) {
+      for await (const chunk of streamTailor({ resume: resumeText, jd })) {
         if (chunk.done) { setStatus('done'); return }
         if (chunk.text) setOutput(prev => prev + chunk.text)
       }
@@ -114,19 +98,7 @@ export function ResumeTailorPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Resume input */}
-        <div className="border border-slate-700/50 rounded-xl p-5" style={panelStyle}>
-          <div className="flex justify-between items-center mb-3">
-            <label className={labelCls}>Your Resume</label>
-            <button onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover font-medium transition-colors">
-              <Upload size={13} /> Upload PDF
-            </button>
-            <input ref={fileRef} type="file" accept=".pdf" onChange={handleFile} className="hidden" />
-          </div>
-          <textarea rows={14} value={resume} onChange={e => setResume(e.target.value)}
-            placeholder="Paste your resume text here..." className={textareaCls} />
-          {fileStatus && <p className="text-xs text-slate-500 mt-2">{fileStatus}</p>}
-        </div>
+        <ResumeInput theme="dark" rows={14} label="Your Resume" />
 
         {/* JD input */}
         <div className="border border-slate-700/50 rounded-xl p-5" style={panelStyle}>
@@ -244,7 +216,7 @@ export function ResumeTailorPage() {
           )}
 
           {viewMode === 'diff' && status === 'done' ? (
-            <DiffView original={resume} tailored={output} />
+            <DiffView original={resumeText} tailored={output} />
           ) : (
             <pre className="whitespace-pre-wrap text-sm text-slate-200 font-sans leading-relaxed">
               {output}

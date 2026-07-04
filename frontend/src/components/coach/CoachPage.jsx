@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
-import { Zap, Upload, Copy, Check } from 'lucide-react'
-import { streamCoach, parseResumePDF } from '../../lib/api'
+import { useState } from 'react'
+import { Zap, Copy, Check } from 'lucide-react'
+import { streamCoach } from '../../lib/api'
 import { useInterviewContext } from '../../context/InterviewContext'
+import { ResumeInput } from '../common/ResumeInput'
 
 const cardCls = 'border rounded-xl p-5 transition-all'
 
@@ -43,8 +44,6 @@ function CopyBtn({ text }) {
 
 export function CoachPage() {
   const { currentJob, resumeText } = useInterviewContext()
-  const [resume, setResume] = useState(resumeText || '')
-  const [fileStatus, setFileStatus] = useState('')
   const [running, setRunning] = useState(false)
 
   const [fit, setFit] = useState(null)
@@ -57,24 +56,8 @@ export function CoachPage() {
   const [outreachStatus, setOutreachStatus] = useState('idle')
   const [followupStatus, setFollowupStatus] = useState('idle')
 
-  const fileRef = useRef(null)
-
-  async function handleFile(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    setFileStatus('Parsing...')
-    try {
-      const data = await parseResumePDF(file)
-      setResume(data.text)
-      setFileStatus(`Loaded "${file.name}"`)
-    } catch (err) {
-      setFileStatus(err.message)
-    }
-    e.target.value = ''
-  }
-
   async function handleRun() {
-    if (!resume.trim()) { alert('Paste your resume first.'); return }
+    if (!resumeText.trim()) { alert('Paste your resume first.'); return }
     if (!currentJob) { alert('Select a job from the Jobs page first.'); return }
 
     setRunning(true)
@@ -82,7 +65,7 @@ export function CoachPage() {
     setFitStatus('loading'); setTailorStatus('idle'); setOutreachStatus('idle'); setFollowupStatus('idle')
 
     try {
-      for await (const event of streamCoach({ resume, job: currentJob })) {
+      for await (const event of streamCoach({ resume: resumeText, job: currentJob })) {
         if (event.step === 'fit') {
           setFit(event.data); setFitStatus('done'); setTailorStatus('loading')
         } else if (event.step === 'tailor') {
@@ -114,19 +97,7 @@ export function CoachPage() {
       </div>
 
       {/* Resume input */}
-      <div className="border border-slate-700/50 rounded-xl p-5 mb-5" style={{ background: 'linear-gradient(160deg, #1E293B 0%, #0F172A 100%)' }}>
-        <div className="flex justify-between items-center mb-3">
-          <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Your Resume</label>
-          <button onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover font-medium">
-            <Upload size={13} /> Upload PDF
-          </button>
-          <input ref={fileRef} type="file" accept=".pdf" onChange={handleFile} className="hidden" />
-        </div>
-        <textarea rows={6} value={resume} onChange={e => setResume(e.target.value)}
-          placeholder="Paste your resume or upload PDF..."
-          className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30" />
-        {fileStatus && <p className="text-xs text-slate-500 mt-1">{fileStatus}</p>}
-      </div>
+      <ResumeInput theme="dark" rows={6} label="Your Resume" className="mb-5" />
 
       <div className="text-center mb-6">
         <button onClick={handleRun} disabled={running}
