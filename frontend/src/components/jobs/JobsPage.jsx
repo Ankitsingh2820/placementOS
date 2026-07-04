@@ -4,6 +4,7 @@ import { useTracker } from '../../hooks/useTracker'
 import { JobFilters } from './JobFilters'
 import { JobCard, JobDetailDrawer } from './JobCard'
 import { parseResumePDF } from '../../lib/api'
+import { useInterviewContext } from '../../context/InterviewContext'
 import {
   Briefcase, Wifi, Sparkles, ArrowRight,
   Upload, X, ChevronDown, ChevronUp, Search, Mic2, Zap,
@@ -62,8 +63,8 @@ function StatPill({ value, label, color }) {
 }
 
 function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
+  const { resumeText, setResumeText } = useInterviewContext()
   const [open, setOpen]          = useState(false)
-  const [text, setText]          = useState('')
   const [fileStatus, setFStatus] = useState('')
   const [busy, setBusy]          = useState(false)
   const fileRef = useRef(null)
@@ -73,15 +74,15 @@ function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
     setFStatus('Parsing…')
     try {
       const d = await parseResumePDF(file)
-      setText(d.text)
+      setResumeText(d.text)
       setFStatus(`"${file.name}" — ${d.text.split(/\s+/).length} words`)
     } catch (err) { setFStatus(err.message || 'Parse failed.') }
     e.target.value = ''
   }
 
   async function handleMatch() {
-    if (!text.trim()) { alert('Paste your resume or upload a PDF first.'); return }
-    setBusy(true); await onMatch(text); setBusy(false)
+    if (!resumeText.trim()) { alert('Paste your resume or upload a PDF first.'); return }
+    setBusy(true); await onMatch(resumeText); setBusy(false)
   }
 
   const hasMatch  = matchStatus?.includes('found')
@@ -174,7 +175,7 @@ function Hero({ jobs, loading, matchStatus, onMatch, onClear }) {
                     <input ref={fileRef} type="file" accept=".pdf" onChange={handleFile} className="hidden" />
                     {fileStatus && <p className="text-xs text-slate-400 self-center">{fileStatus}</p>}
                   </div>
-                  <textarea rows={3} value={text} onChange={e => setText(e.target.value)}
+                  <textarea rows={3} value={resumeText} onChange={e => setResumeText(e.target.value)}
                     placeholder="Or paste resume text…"
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 resize-none focus:outline-none focus:ring-1 focus:ring-primary/60 mb-3" />
                   <div className="flex gap-2 items-center">
