@@ -1,4 +1,4 @@
-﻿import os
+import os
 import re
 import json
 import asyncio
@@ -227,7 +227,7 @@ def _parse_workingnomads(board: dict, data: list) -> list[dict]:
             "company": item.get("company_name", ""),
             "source": board["short"],
             "url": item.get("url", ""),
-            "tags": [t.strip() for t in item.get("tags", "").split(",") if t.strip()][:5],
+            "tags": [t.strip() for t in (item.get("tags") or "").split(",") if t.strip()][:5],
             "salary": "",
             "posted_at": _iso_date(item.get("pub_date", "")),
             "eligibility": tag_eligibility(text, work_type),

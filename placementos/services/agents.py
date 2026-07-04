@@ -139,7 +139,8 @@ async def generate_followup(role: str, company: str, outreach_snippet: str) -> s
 async def rank_jobs(criteria: str, jobs: list, top_k: int = 10, with_action: bool = False) -> list:
     slim = [
         {"job_id": j["id"], "title": j["title"], "company": j["company"],
-         "description": j.get("description", "")[:300], "tags": j.get("tags", [])}
+         "description": j.get("description", "")[:300], "tags": j.get("tags", []),
+         "work_type": j.get("work_type", ""), "eligibility": j.get("eligibility", "")}
         for j in jobs[:60]
     ]
     jobs_json = json.dumps(slim)
