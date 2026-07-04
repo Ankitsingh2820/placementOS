@@ -35,6 +35,29 @@ Requirements:
 - Return ONLY the email body, no subject line, no explanation
 """
 
+RANK_PROMPT = """\
+Rank the best job matches for the criteria below.
+
+Criteria:
+{criteria}
+
+Available jobs (JSON):
+{jobs_json}
+
+Return ONLY a valid JSON array of the top {top_k} matches — no markdown:
+[
+  {{
+    "job_id": "exact id from the list",
+    "score": 0,
+    "reason": "one sentence explaining the match"{action_field}
+  }}
+]
+
+Use only job_ids from the provided list. Rank by how well each job fits the criteria.
+"""
+
+_ACTION_FIELD = ',\n    "action": "one specific thing to do before applying"'
+
 SCOUT_PROMPT = """\
 A job seeker is looking for: "{query}"
 
@@ -151,6 +174,27 @@ async def generate_followup(role: str, company: str, outreach_snippet: str) -> s
         return raw.strip()
     except Exception:
         return ""
+
+
+async def rank_jobs(criteria: str, jobs: list, top_k: int = 10, with_action: bool = False) -> list:
+    slim = [
+        {"job_id": j["id"], "title": j["title"], "company": j["company"],
+         "description": j.get("description", "")[:300], "tags": j.get("tags", [])}
+        for j in jobs[:60]
+    ]
+    jobs_json = json.dumps(slim)
+    if len(jobs_json) > 8000:
+        slim = slim[:max(1, 8000 * len(slim) // len(jobs_json))]
+        jobs_json = json.dumps(slim)
+    prompt = RANK_PROMPT.format(
+        criteria=criteria[:2000],
+        jobs_json=jobs_json,
+        top_k=top_k,
+        action_field=_ACTION_FIELD if with_action else "",
+    )
+    raw = await _call(prompt, max_tokens=1024)
+    results = _parse_json(raw, [])
+    return [r for r in results if isinstance(r, dict) and r.get("job_id")]
 
 
 async def scout_jobs(query: str, jobs: list) -> list:
