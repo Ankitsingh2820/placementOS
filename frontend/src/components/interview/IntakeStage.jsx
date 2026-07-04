@@ -1,29 +1,12 @@
-import { useState, useRef } from 'react'
-import { Upload } from 'lucide-react'
-import { parseResumePDF } from '../../lib/api'
+import { useState } from 'react'
 import { useInterviewContext } from '../../context/InterviewContext'
+import { ResumeInput } from '../common/ResumeInput'
 
 export function IntakeStage({ onStart }) {
-  const { resumeText, setResumeText, githubUrl, setGithubUrl, currentJob } = useInterviewContext()
+  const { resumeText, githubUrl, setGithubUrl, currentJob } = useInterviewContext()
   const [jd, setJd] = useState(
     currentJob ? `${currentJob.title} at ${currentJob.company}\n\n${currentJob.description || ''}` : ''
   )
-  const [fileStatus, setFileStatus] = useState('')
-  const fileRef = useRef(null)
-
-  async function handleFile(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    setFileStatus('Parsing...')
-    try {
-      const data = await parseResumePDF(file)
-      setResumeText(data.text)
-      setFileStatus(`Loaded "${file.name}"`)
-    } catch (err) {
-      setFileStatus(err.message)
-    }
-    e.target.value = ''
-  }
 
   function handleStart() {
     if (!resumeText.trim()) { alert('Please paste your resume first.'); return }
@@ -44,19 +27,7 @@ export function IntakeStage({ onStart }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="border border-slate-700/50 rounded-xl p-5" style={{ background: 'linear-gradient(160deg, #1E293B 0%, #0F172A 100%)' }}>
-          <div className="flex justify-between items-center mb-3">
-            <label className={labelCls}>Your Resume</label>
-            <button onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover font-medium transition-colors">
-              <Upload size={13} /> Upload PDF
-            </button>
-            <input ref={fileRef} type="file" accept=".pdf" onChange={handleFile} className="hidden" />
-          </div>
-          <textarea rows={10} value={resumeText} onChange={e => setResumeText(e.target.value)}
-            placeholder="Paste your resume text here..." className={textareaCls} />
-          {fileStatus && <p className="text-xs text-slate-500 mt-2">{fileStatus}</p>}
-        </div>
+        <ResumeInput theme="dark" rows={10} label="Your Resume" />
 
         <div className="border border-slate-700/50 rounded-xl p-5 flex flex-col gap-4" style={{ background: 'linear-gradient(160deg, #1E293B 0%, #0F172A 100%)' }}>
           <div>
