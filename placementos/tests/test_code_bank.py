@@ -80,6 +80,19 @@ def test_problem_slug_renders_via_llm_when_not_seed():
     assert body["leetcode_url"].endswith("/reorder-list/")
 
 
+def test_problem_slug_seed_not_in_bank_gets_correct_leetcode_url():
+    # max-subarray is a curated seed whose id is NOT the canonical LeetCode slug,
+    # and it is absent from _BANK. render_problem must still return a correct
+    # leetcode_url (not a naive/404 f"...problems/{slug}/" fallback).
+    with patch("services.problem_bank.load_bank", return_value=_BANK):
+        r = _client().get("/code/problem/max-subarray")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["leetcode_url"] == "https://leetcode.com/problems/maximum-subarray/"
+    assert body["solvable"] is True
+    assert body["starter_code"]["python"]  # curated seed statement
+
+
 def test_problem_slug_unknown_is_404():
     with patch("services.problem_bank.load_bank", return_value=_BANK):
         r = _client().get("/code/problem/does-not-exist")

@@ -55,6 +55,7 @@ SEED_PROBLEMS = [
             "javascript": "function maxSubArray(nums) {\n\n}",
             "cpp": "#include<vector>\nusing namespace std;\n\nint maxSubArray(vector<int>& nums) {\n\n}",
         },
+        "leetcode_url": "https://leetcode.com/problems/maximum-subarray/",
     },
     {
         "id": "climbing-stairs",
@@ -108,6 +109,7 @@ SEED_PROBLEMS = [
             "javascript": "function lengthOfLongestSubstring(s) {\n\n}",
             "cpp": "#include<string>\nusing namespace std;\n\nint lengthOfLongestSubstring(string s) {\n\n}",
         },
+        "leetcode_url": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
     },
     {
         "id": "number-of-islands",
@@ -159,6 +161,7 @@ SEED_PROBLEMS = [
             "javascript": "function maxProfit(prices) {\n\n}",
             "cpp": "#include<vector>\nusing namespace std;\n\nint maxProfit(vector<int>& prices) {\n\n}",
         },
+        "leetcode_url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/",
     },
     {
         "id": "valid-palindrome",
@@ -309,8 +312,7 @@ async def render_problem(slug: str) -> dict | None:
         seed = dict(_SEED_BY_SLUG[slug])
         seed["slug"] = slug
         seed["solvable"] = True
-        if meta:
-            seed["leetcode_url"] = meta["leetcode_url"]
+        seed["leetcode_url"] = meta["leetcode_url"] if meta else seed.get("leetcode_url", f"https://leetcode.com/problems/{slug}/")
         return seed
 
     base = {
