@@ -1,4 +1,9 @@
-from services.problem_bank import title_from_slug, parse_problem_rows, merge_records
+import json
+
+from services.problem_bank import (
+    title_from_slug, parse_problem_rows, merge_records,
+    load_bank, get_companies, get_company_problems, find_problem,
+)
 
 
 def test_title_from_slug():
@@ -165,3 +170,55 @@ def test_merge_prefers_real_title_over_slug_derived():
     assert lru["title"] == "LRU Cache"       # real title preferred over slug-derived
     assert lru["difficulty"] == "Medium"     # filled from the tagged source
     assert lru["acceptance"] == 40.0
+
+
+_FIXTURE = {
+    "generated_at": "2026-07-19",
+    "problems": [
+        {"slug": "two-sum", "id": 1, "title": "Two Sum", "difficulty": "Easy",
+         "acceptance": 48.6, "leetcode_url": "https://leetcode.com/problems/two-sum/",
+         "companies": [{"company": "Amazon", "rank": 6}]},
+        {"slug": "number-of-islands", "id": 200, "title": "Number of Islands",
+         "difficulty": "Medium", "acceptance": 54.1,
+         "leetcode_url": "https://leetcode.com/problems/number-of-islands/",
+         "companies": [{"company": "Amazon", "rank": 3}, {"company": "Google", "rank": 1}]},
+    ],
+    "companies": [
+        {"company": "Amazon", "count": 2, "source_date": "2022-05-18", "ordering": "frequency"},
+        {"company": "Google", "count": 1, "source_date": None, "ordering": "listed"},
+    ],
+}
+
+
+def test_load_bank_missing_file_is_empty():
+    bank = load_bank("/no/such/file.json")
+    assert bank == {"generated_at": None, "problems": [], "companies": []}
+
+
+def test_get_company_problems_sorted_by_rank(tmp_path):
+    p = tmp_path / "bank.json"
+    p.write_text(json.dumps(_FIXTURE), encoding="utf-8")
+    bank = load_bank(str(p))
+    amazon = get_company_problems(bank, "Amazon")
+    assert [x["slug"] for x in amazon] == ["number-of-islands", "two-sum"]  # rank 3 before rank 6
+    assert amazon[0]["rank"] == 3
+    google = get_company_problems(bank, "Google")
+    assert [x["slug"] for x in google] == ["number-of-islands"]
+
+
+def test_get_companies_sorted_by_count(tmp_path):
+    p = tmp_path / "bank.json"
+    p.write_text(json.dumps(_FIXTURE), encoding="utf-8")
+    bank = load_bank(str(p))
+    cos = get_companies(bank)
+    assert cos[0]["company"] == "Amazon"
+    assert cos[0]["source_date"] == "2022-05-18"
+    assert cos[0]["ordering"] == "frequency"
+
+
+def test_find_problem(tmp_path):
+    p = tmp_path / "bank.json"
+    p.write_text(json.dumps(_FIXTURE), encoding="utf-8")
+    bank = load_bank(str(p))
+    assert find_problem(bank, "two-sum")["title"] == "Two Sum"
+    assert find_problem(bank, "nope") is None

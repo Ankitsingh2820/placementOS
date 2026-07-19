@@ -114,3 +114,62 @@ def merge_records(per_company: dict[str, list[dict]]) -> dict:
                 existing_rank["rank"] = rank
 
     return {"problems": list(problems.values()), "companies": companies}
+
+
+# --- Runtime loader --------------------------------------------------------
+
+import os
+import json
+
+_DEFAULT_BANK_PATH = os.path.join(os.path.dirname(__file__), "../data/company_problems.json")
+_CACHE: dict | None = None
+
+
+def load_bank(path: str | None = None) -> dict:
+    global _CACHE
+    if path is None:
+        if _CACHE is not None:
+            return _CACHE
+        path = _DEFAULT_BANK_PATH
+    empty = {"generated_at": None, "problems": [], "companies": []}
+    try:
+        with open(path, encoding="utf-8") as f:
+            bank = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        bank = empty
+    if path == _DEFAULT_BANK_PATH:
+        _CACHE = bank
+    return bank
+
+
+def get_companies(bank: dict) -> list[dict]:
+    cos = [
+        {
+            "company": c["company"],
+            "count": c["count"],
+            "source_date": c.get("source_date"),
+            "ordering": c.get("ordering"),
+        }
+        for c in bank.get("companies", [])
+    ]
+    cos.sort(key=lambda c: c["count"], reverse=True)
+    return cos
+
+
+def get_company_problems(bank: dict, company: str) -> list[dict]:
+    out = []
+    for p in bank.get("problems", []):
+        entry = next((c for c in p["companies"] if c["company"] == company), None)
+        if entry is None:
+            continue
+        out.append({
+            "slug": p["slug"], "id": p.get("id"), "title": p["title"],
+            "difficulty": p.get("difficulty"), "acceptance": p.get("acceptance"),
+            "leetcode_url": p["leetcode_url"], "rank": entry["rank"],
+        })
+    out.sort(key=lambda x: x["rank"])
+    return out
+
+
+def find_problem(bank: dict, slug: str) -> dict | None:
+    return next((p for p in bank.get("problems", []) if p["slug"] == slug), None)
