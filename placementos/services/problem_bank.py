@@ -2,11 +2,17 @@ import re
 
 _ROW_RE = re.compile(
     r"(?P<id>\d+)\s+"
-    r"(?P<title>.+?)\s*"
+    # Tempered + length-bounded title: cannot cross into the next problem's
+    # link and cannot swallow a page header. Longest real LeetCode title is
+    # 59 chars ("Count Unique Characters of All Substrings of a Given
+    # String"), so a 70-char cap keeps every real title yet rejects the
+    # multi-word header preambles (e.g. "... Show problem tags # Title
+    # Acceptance Difficulty Frequency 1 Two Sum" = 77 chars).
+    r"(?P<title>(?:(?!\(/problems/).){1,70}?)\s*"
     r"\(/problems/(?P<slug>[a-z0-9\-\s]+?)\)"
     r"\s*(?:(?P<acc>\d+(?:\.\d+)?)%\s*)?"
-    r"(?P<diff>Easy|Medium|Hard)",
-    re.DOTALL,
+    # Required trailing difficulty tightly bounds each row.
+    r"(?P<diff>Easy|Medium|Hard)"
 )
 _URL_RE = re.compile(r"https?://leetcode\.com/problems/(?P<slug>[a-z0-9\-]+)/?")
 
@@ -26,6 +32,10 @@ def _clean_title(raw: str) -> str:
 def parse_problem_rows(text: str) -> list[dict]:
     rows: list[dict] = []
     seen: set[str] = set()
+
+    # Collapse all whitespace (incl. newlines) to single spaces so wrapped rows
+    # become contiguous. Removes the need for re.DOTALL in _ROW_RE.
+    text = re.sub(r"\s+", " ", text)
 
     for m in _ROW_RE.finditer(text):
         slug = _clean_slug(m.group("slug"))

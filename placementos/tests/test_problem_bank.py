@@ -47,6 +47,97 @@ def test_parse_skips_noise():
     assert parse_problem_rows(text) == []
 
 
+def test_parse_multi_row_block_no_title_bleed():
+    # Two rows on one contiguous line must NOT collapse into one record.
+    # id 4 -> median-of-two-sorted-arrays, id 192 -> word-frequency.
+    text = (
+        "4 Median of Two Sorted Arrays (/problems/median-of-two-sorted-arrays) 26.9% Hard "
+        "192 Word Frequency (/problems/word-frequency) 25.9% Medium"
+    )
+    rows = parse_problem_rows(text)
+    by_slug = {r["slug"]: r for r in rows}
+    assert set(by_slug) == {"median-of-two-sorted-arrays", "word-frequency"}
+    assert by_slug["median-of-two-sorted-arrays"]["id"] == 4
+    assert by_slug["median-of-two-sorted-arrays"]["title"] == "Median of Two Sorted Arrays"
+    assert by_slug["median-of-two-sorted-arrays"]["difficulty"] == "Hard"
+    assert by_slug["word-frequency"]["id"] == 192
+    assert by_slug["word-frequency"]["title"] == "Word Frequency"
+    assert by_slug["word-frequency"]["difficulty"] == "Medium"
+    for r in rows:
+        assert "/problems/" not in r["title"]
+        assert len(r["title"]) < 80
+
+
+def test_parse_three_rows_no_collapse():
+    text = (
+        "269 Alien Dictionary (/problems/alien-dictionary) 31.6% Hard "
+        "585 Investments in 2016 (/problems/investments-in-2016) 48.2% Medium "
+        "679 24 Game (/problems/24-game) 47.0% Hard"
+    )
+    rows = parse_problem_rows(text)
+    by_slug = {r["slug"]: r for r in rows}
+    assert set(by_slug) == {"alien-dictionary", "investments-in-2016", "24-game"}
+    assert by_slug["alien-dictionary"]["id"] == 269
+    assert by_slug["investments-in-2016"]["id"] == 585
+    assert by_slug["24-game"]["id"] == 679
+    assert by_slug["24-game"]["title"] == "24 Game"
+
+
+def test_parse_dropped_difficulty_does_not_bleed_into_next_row():
+    # Real PDF artifact: the first row's difficulty token is missing (garbled
+    # "Di?culty" extraction). The lazy title must NOT cross into the next row's
+    # link and steal its slug. Median has no valid row here, so it is simply
+    # skipped -- but word-frequency must still parse cleanly with id 192.
+    text = (
+        "4 Median of Two Sorted Arrays (/problems/median-of-two-sorted-arrays) 26.9% "
+        "192 Word Frequency (/problems/word-frequency) 25.9% Medium"
+    )
+    rows = parse_problem_rows(text)
+    by_slug = {r["slug"]: r for r in rows}
+    assert "word-frequency" in by_slug
+    wf = by_slug["word-frequency"]
+    assert wf["id"] == 192
+    assert wf["title"] == "Word Frequency"
+    assert wf["difficulty"] == "Medium"
+    # median must never appear under the wrong slug/id with a bled title
+    assert "median-of-two-sorted-arrays" not in {r["slug"] for r in rows} or \
+        by_slug["median-of-two-sorted-arrays"]["id"] == 4
+    for r in rows:
+        assert "/problems/" not in r["title"]
+
+
+def test_parse_ignores_page_header_preamble():
+    # Page-header junk before the first row must not become id/title.
+    text = (
+        "5/18/22, 5:13 PM Amazon - LeetCode https://leetcode.com/company/amazon/ 1/31 "
+        "You have solved 80 / 1166 problems. Show problem tags "
+        "# Title Acceptance Difficulty Frequency "
+        "1 Two Sum (/problems/two-sum) 48.6% Easy"
+    )
+    rows = parse_problem_rows(text)
+    assert rows == [{
+        "id": 1, "title": "Two Sum", "slug": "two-sum",
+        "difficulty": "Easy", "acceptance": 48.6,
+    }]
+
+
+def test_parse_titles_never_contain_bleed_tokens():
+    text = (
+        "4 Median of Two Sorted Arrays (/problems/median-of-two-sorted-arrays) 26.9% Hard "
+        "192 Word Frequency (/problems/word-frequency) 25.9% Medium "
+        "269 Alien Dictionary (/problems/alien-dictionary) 31.6% Hard"
+    )
+    rows = parse_problem_rows(text)
+    assert rows  # non-empty
+    for r in rows:
+        title = r["title"]
+        assert "/problems/" not in title
+        tokens = title.split()
+        assert "Easy" not in tokens
+        assert "Medium" not in tokens
+        assert "Hard" not in tokens
+
+
 def test_merge_dedupes_and_keeps_best_rank():
     amazon = [
         {"id": 1, "title": "Two Sum", "slug": "two-sum", "difficulty": "Easy", "acceptance": 48.6},
