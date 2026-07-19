@@ -65,9 +65,12 @@ def test_merge_dedupes_and_keeps_best_rank():
 
 
 def test_merge_prefers_real_title_over_slug_derived():
-    tagged = [{"id": 1, "title": "Two Sum", "slug": "two-sum", "difficulty": "Easy", "acceptance": 48.6}]
-    url_only = [{"id": None, "title": "Two Sum", "slug": "two-sum", "difficulty": None, "acceptance": None}]
-    out = merge_records({"Amazon": tagged, "Sheet": url_only})
-    two_sum = next(p for p in out["problems"] if p["slug"] == "two-sum")
-    assert two_sum["difficulty"] == "Easy"       # filled from the tagged source
-    assert two_sum["acceptance"] == 48.6
+    # Sheet (URL-only) is processed first -> entry starts with slug-derived title "Lru Cache".
+    # Amazon (tagged) then supplies the real title "LRU Cache", which must replace it.
+    url_only = [{"id": None, "title": "Lru Cache", "slug": "lru-cache", "difficulty": None, "acceptance": None}]
+    tagged = [{"id": 146, "title": "LRU Cache", "slug": "lru-cache", "difficulty": "Medium", "acceptance": 40.0}]
+    out = merge_records({"Sheet": url_only, "Amazon": tagged})
+    lru = next(p for p in out["problems"] if p["slug"] == "lru-cache")
+    assert lru["title"] == "LRU Cache"       # real title preferred over slug-derived
+    assert lru["difficulty"] == "Medium"     # filled from the tagged source
+    assert lru["acceptance"] == 40.0
