@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
 import { useInterviewContext } from '../../context/InterviewContext'
-import { fetchProblems, evaluateCode, fetchHint } from '../../lib/api'
+import { fetchProblems, evaluateCode, fetchHint, fetchCompanies, fetchCompanyProblems, fetchProblemDetail } from '../../lib/api'
 import {
   Code2, ChevronRight, Lightbulb, Play, RotateCcw,
   CheckCircle2, XCircle, AlertCircle, Loader2, Sparkles, BookOpen,
@@ -60,6 +60,10 @@ export function CodePage() {
   const [hint, setHint]           = useState('')
   const [filter, setFilter]       = useState('All')
 
+  const [companies, setCompanies]         = useState([])
+  const [company, setCompany]             = useState('')
+  const [loadingDetail, setLoadingDetail] = useState(false)
+
   const [loadingProblems, setLoadingProblems] = useState(true)
   const [evaluating, setEvaluating]           = useState(false)
   const [hinting, setHinting]                 = useState(false)
@@ -69,6 +73,27 @@ export function CodePage() {
   useEffect(() => {
     loadProblems(false)
   }, [])
+
+  // Load the company list once (for the picker); degrade to empty on failure
+  useEffect(() => {
+    fetchCompanies().then(setCompanies).catch(() => setCompanies([]))
+  }, [])
+
+  // When a company is chosen, load its bank problems instead of the seed/job list
+  useEffect(() => {
+    if (!company) return
+    setSelected(null); setResult(null); setHint('')
+    setLoadingProblems(true)
+    fetchCompanyProblems(company)
+      .then((data) => setProblems(data))
+      .catch(() => setProblems([]))
+      .finally(() => setLoadingProblems(false))
+  }, [company])
+
+  function handleCompanyChange(next) {
+    setCompany(next)
+    if (!next) loadProblems(false)
+  }
 
   async function loadProblems(withJob) {
     setLoadingProblems(true)
@@ -90,6 +115,29 @@ export function CodePage() {
     setCode(p.starter_code?.[language] || '')
     setResult(null)
     setHint('')
+  }
+
+  // Bank rows carry a slug but no description/examples yet — fetch full detail
+  // on demand before loading the editor. Seed/job problems already have a
+  // description and load straight through.
+  async function openProblem(p) {
+    setResult(null); setHint('')
+    if (p.slug && !p.description) {
+      setLoadingDetail(true)
+      try {
+        const full = await fetchProblemDetail(p.slug)
+        setSelected(full)
+        setCode(full.starter_code?.[lang] ?? '')
+      } catch {
+        setSelected(null)
+        if (p.leetcode_url) window.open(p.leetcode_url, '_blank')
+      } finally {
+        setLoadingDetail(false)
+      }
+    } else {
+      setSelected(p)
+      setCode(p.starter_code?.[lang] ?? '')
+    }
   }
 
   function handleLangChange(newLang) {
@@ -125,6 +173,7 @@ export function CodePage() {
 
   const difficulties = ['All', 'Easy', 'Medium', 'Hard']
   const filtered = problems.filter(p => filter === 'All' || p.difficulty === filter)
+  const selectedCompanyMeta = companies.find(c => c.company === company)
 
   const scoreColor = result
     ? result.score >= 80 ? 'text-emerald-400'
@@ -158,6 +207,22 @@ export function CodePage() {
           </button>
         </div>
 
+        {/* Company picker */}
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-700/30">
+          <select
+            value={company}
+            onChange={(e) => handleCompanyChange(e.target.value)}
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
+          >
+            <option value="">Seed problems</option>
+            {companies.map((c) => (
+              <option key={c.company} value={c.company}>
+                {c.company} — {c.count} problems{c.source_date ? ` · ${c.source_date.slice(0, 4)}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Difficulty filter */}
         <div className="flex gap-1 px-3 py-2 border-b border-slate-700/30">
           {difficulties.map(d => (
@@ -172,6 +237,13 @@ export function CodePage() {
 
         {/* Problem list */}
         <div className="flex-1 overflow-y-auto py-2">
+          {company && selectedCompanyMeta && (
+            <p className="px-4 pb-2 text-[10px] italic text-slate-500">
+              {selectedCompanyMeta.ordering === 'frequency'
+                ? 'Ordered by interview frequency — most-asked first'
+                : 'Curated list from company prep sheet'}
+            </p>
+          )}
           {loadingProblems ? (
             <div className="space-y-2 px-3 pt-2">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -179,9 +251,9 @@ export function CodePage() {
               ))}
             </div>
           ) : filtered.map((p, i) => (
-            <button key={p.id} onClick={() => selectProblem(p, lang)}
+            <button key={p.slug ?? p.id ?? i} onClick={() => openProblem(p)}
               className={`w-full text-left px-4 py-3 transition-all border-l-2 ${
-                selected?.id === p.id
+                selected?.id === p.id && selected?.title === p.title
                   ? 'bg-indigo-500/10 border-l-indigo-500 text-white'
                   : 'border-l-transparent hover:bg-slate-800/50 text-slate-400 hover:text-slate-200'
               }`}>
@@ -190,12 +262,18 @@ export function CodePage() {
                 <ChevronRight size={12} className="shrink-0 opacity-50" />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${DIFFICULTY_COLOR[p.difficulty]}`}>
-                  {p.difficulty}
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${DIFFICULTY_COLOR[p.difficulty] || 'text-slate-400 bg-slate-400/10 border-slate-400/20'}`}>
+                  {p.difficulty || '—'}
                 </span>
-                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${TOPIC_COLOR[p.topic] || 'bg-slate-700 text-slate-400'}`}>
-                  {p.topic}
-                </span>
+                {p.topic ? (
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${TOPIC_COLOR[p.topic] || 'bg-slate-700 text-slate-400'}`}>
+                    {p.topic}
+                  </span>
+                ) : p.acceptance != null ? (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">
+                    {p.acceptance}% acceptance
+                  </span>
+                ) : null}
               </div>
             </button>
           ))}
@@ -211,7 +289,14 @@ export function CodePage() {
       </div>
 
       {/* ── Main Panel ──────────────────────────────────────── */}
-      {!selected ? (
+      {loadingDetail ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 size={28} className="text-indigo-400 mx-auto mb-3 animate-spin" />
+            <p className="text-slate-500 text-sm">Loading problem…</p>
+          </div>
+        </div>
+      ) : !selected ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <BookOpen size={40} className="text-slate-700 mx-auto mb-3" />
@@ -229,12 +314,20 @@ export function CodePage() {
               <div className="mb-5">
                 <h2 className="text-lg font-bold text-white mb-2">{selected.title}</h2>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${DIFFICULTY_COLOR[selected.difficulty]}`}>
-                    {selected.difficulty}
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${DIFFICULTY_COLOR[selected.difficulty] || 'text-slate-400 bg-slate-400/10 border-slate-400/20'}`}>
+                    {selected.difficulty || '—'}
                   </span>
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${TOPIC_COLOR[selected.topic] || 'bg-slate-700 text-slate-400'}`}>
-                    {selected.topic}
-                  </span>
+                  {selected.topic && (
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${TOPIC_COLOR[selected.topic] || 'bg-slate-700 text-slate-400'}`}>
+                      {selected.topic}
+                    </span>
+                  )}
+                  {selected.leetcode_url && (
+                    <a href={selected.leetcode_url} target="_blank" rel="noopener noreferrer"
+                       className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-700/60 text-indigo-300 hover:text-indigo-200 hover:bg-slate-700 transition-colors">
+                      Open on LeetCode ↗
+                    </a>
+                  )}
                 </div>
               </div>
 

@@ -187,6 +187,24 @@ export async function fetchHint({ problem, code, language }) {
   return r.json()
 }
 
+export async function fetchCompanies() {
+  const r = await fetch('/code/companies')
+  if (!r.ok) throw new Error('Failed to fetch companies')
+  return r.json()
+}
+
+export async function fetchCompanyProblems(company) {
+  const r = await fetch(`/code/problems?company=${encodeURIComponent(company)}`)
+  if (!r.ok) throw new Error('Failed to fetch company problems')
+  return r.json()
+}
+
+export async function fetchProblemDetail(slug) {
+  const r = await fetch(`/code/problem/${encodeURIComponent(slug)}`)
+  if (!r.ok) throw new Error('Failed to fetch problem')
+  return r.json()
+}
+
 export async function generateRoadmap({ domain, level }) {
   const r = await fetch('/career/roadmap', {
     method: 'POST',
