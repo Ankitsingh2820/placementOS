@@ -254,7 +254,7 @@ export function CodePage() {
           ) : filtered.map((p, i) => (
             <button key={p.slug ?? p.id ?? i} onClick={() => openProblem(p)}
               className={`w-full text-left px-4 py-3 transition-all border-l-2 ${
-                selected?.slug === p.slug || (selected?.id != null && selected?.id === p.id)
+                (selected?.slug != null && selected?.slug === p.slug) || (selected?.id != null && selected?.id === p.id)
                   ? 'bg-indigo-500/10 border-l-indigo-500 text-white'
                   : 'border-l-transparent hover:bg-slate-800/50 text-slate-400 hover:text-slate-200'
               }`}>
