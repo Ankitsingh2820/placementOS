@@ -218,14 +218,26 @@ def _derived_records(full_text: str) -> list[dict]:
 
 
 def _source_date(text: str) -> str | None:
+    """Parse a day/month/year banner, disambiguating without assuming a fixed
+    field order. Two real formats appear: `5/18/22, 5:13 PM` (US M/D/YY) and
+    `29/07/2019` (D/M/Y). Given the three integer fields (a, b, y): if `a` is
+    not a valid month (>12) it must be the day, so treat as D/M/Y; elif `b`
+    is not a valid month it must be the day, so treat as M/D/Y; otherwise
+    both are <=12 and ambiguous, so default to the US M/D/Y convention.
+    """
     m = _DATE_RE.search(text)
     if not m:
         return None
-    mm, dd, yy = m.groups()
-    yy = int(yy)
-    if yy < 100:
-        yy += 2000
-    return f"{yy:04d}-{int(mm):02d}-{int(dd):02d}"
+    a, b, y = (int(g) for g in m.groups())
+    if a > 12:
+        day, month = a, b
+    elif b > 12:
+        month, day = a, b
+    else:
+        month, day = a, b
+    if y < 100:
+        y += 2000
+    return f"{y:04d}-{month:02d}-{day:02d}"
 
 
 def _records_for(reader: pypdf.PdfReader, full_text: str, company: str) -> tuple[list[dict], str]:
@@ -250,6 +262,7 @@ def _records_for(reader: pypdf.PdfReader, full_text: str, company: str) -> tuple
 def main() -> int:
     per_company: dict[str, list[dict]] = {}
     source_dates: dict[str, str | None] = {}
+    orderings: dict[str, str] = {}
 
     for basename, company in FILENAME_COMPANY_MAP.items():
         path = _find_pdf(basename)
@@ -261,12 +274,17 @@ def main() -> int:
         records, mode = _records_for(reader, text, company)
         per_company[company] = records
         source_dates[company] = _source_date(text)
+        # "text" mode = LeetCode company-tag page printouts, whose row order
+        # is interview frequency. "annotation"/"derived" modes are SDE-sheet
+        # PDFs ordered easiest-first / by id, not by frequency.
+        orderings[company] = "frequency" if mode == "text" else "listed"
         print(f"  ok       {company:14s} {len(records):4d} problems  "
               f"[{mode:10s}] ({basename})")
 
     bank = merge_records(per_company)
     for c in bank["companies"]:
         c["source_date"] = source_dates.get(c["company"])
+        c["ordering"] = orderings.get(c["company"], "listed")
     bank["companies"].sort(key=lambda c: c["count"], reverse=True)
     bank = {"generated_at": date.today().isoformat(), **bank}
 

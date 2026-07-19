@@ -23788,87 +23788,104 @@
     {
       "company": "Amazon",
       "count": 981,
-      "source_date": "2022-05-18"
+      "source_date": "2022-05-18",
+      "ordering": "frequency"
     },
     {
       "company": "Google",
       "count": 456,
-      "source_date": null
+      "source_date": null,
+      "ordering": "listed"
     },
     {
       "company": "Microsoft",
       "count": 373,
-      "source_date": null
+      "source_date": null,
+      "ordering": "listed"
     },
     {
       "company": "Facebook",
       "count": 184,
-      "source_date": "2019-29-07"
+      "source_date": "2019-07-29",
+      "ordering": "frequency"
     },
     {
       "company": "Uber",
       "count": 158,
-      "source_date": null
+      "source_date": null,
+      "ordering": "listed"
     },
     {
       "company": "LinkedIn",
       "count": 133,
-      "source_date": null
+      "source_date": null,
+      "ordering": "listed"
     },
     {
       "company": "Adobe",
       "count": 98,
-      "source_date": "2019-29-07"
+      "source_date": "2019-07-29",
+      "ordering": "frequency"
     },
     {
       "company": "Apple",
       "count": 94,
-      "source_date": "2019-29-07"
+      "source_date": "2019-07-29",
+      "ordering": "frequency"
     },
     {
       "company": "VMware",
       "count": 81,
-      "source_date": null
+      "source_date": null,
+      "ordering": "listed"
     },
     {
       "company": "JP Morgan",
       "count": 71,
-      "source_date": null
+      "source_date": null,
+      "ordering": "listed"
     },
     {
       "company": "Goldman Sachs",
       "count": 65,
-      "source_date": null
+      "source_date": null,
+      "ordering": "listed"
     },
     {
       "company": "Twitter",
       "count": 60,
-      "source_date": null
+      "source_date": null,
+      "ordering": "frequency"
     },
     {
       "company": "Expedia",
       "count": 33,
-      "source_date": "2019-29-07"
+      "source_date": "2019-07-29",
+      "ordering": "frequency"
     },
     {
       "company": "Visa",
       "count": 29,
-      "source_date": "2019-29-07"
+      "source_date": "2019-07-29",
+      "ordering": "frequency"
     },
     {
       "company": "Oracle",
       "count": 25,
-      "source_date": "2019-29-07"
+      "source_date": "2019-07-29",
+      "ordering": "frequency"
     },
     {
       "company": "Walmart",
       "count": 17,
-      "source_date": "2019-29-07"
+      "source_date": "2019-07-29",
+      "ordering": "frequency"
     },
     {
       "company": "Directi",
       "count": 0,
-      "source_date": null
+      "source_date": null,
+      "ordering": "listed"
     }
   ]
 }
