@@ -1,5 +1,6 @@
 import json
 from services.claude import get_client, MODEL
+from services import problem_bank
 
 SEED_PROBLEMS = [
     {
@@ -279,6 +280,72 @@ Return ONLY a valid JSON array with this exact structure (no markdown):
   }}
 ]
 """
+
+
+RENDER_PROMPT = """\
+Reproduce the well-known LeetCode problem "{title}" (slug: {slug}).
+This is an existing, canonical problem — do NOT invent a new one.
+
+Return ONLY valid JSON (no markdown):
+{{
+  "description": "<full problem statement, newlines as \\n>",
+  "topic": "<Arrays|Strings|Trees|Dynamic Programming|Graphs|Hash Maps|Sorting|Sliding Window|Linked Lists|Stacks|Searching|Design>",
+  "examples": [{{"input": "<input>", "output": "<output>", "explanation": "<or empty>"}}],
+  "constraints": ["<constraint>"],
+  "starter_code": {{"python": "<stub>", "javascript": "<stub>", "cpp": "<stub>"}}
+}}
+"""
+
+_SEED_BY_SLUG = {p["id"]: p for p in SEED_PROBLEMS}  # seed "id" is the slug string
+
+
+async def render_problem(slug: str) -> dict | None:
+    bank = problem_bank.load_bank()
+    meta = problem_bank.find_problem(bank, slug)
+    if meta is None and slug not in _SEED_BY_SLUG:
+        return None
+
+    if slug in _SEED_BY_SLUG:
+        seed = dict(_SEED_BY_SLUG[slug])
+        seed["slug"] = slug
+        seed["solvable"] = True
+        if meta:
+            seed["leetcode_url"] = meta["leetcode_url"]
+        return seed
+
+    base = {
+        "slug": slug,
+        "id": meta.get("id"),
+        "title": meta["title"],
+        "difficulty": meta.get("difficulty"),
+        "leetcode_url": meta["leetcode_url"],
+        "solvable": True,
+    }
+    try:
+        client = get_client()
+        resp = await client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": RENDER_PROMPT.format(title=meta["title"], slug=slug)}],
+            max_tokens=1500,
+        )
+        raw = resp.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
+        data = json.loads(raw)
+        base.update({
+            "description": data.get("description", ""),
+            "topic": data.get("topic", ""),
+            "examples": data.get("examples", []),
+            "constraints": data.get("constraints", []),
+            "starter_code": data.get("starter_code", {}),
+        })
+    except Exception:
+        # LLM failed: minimal record, user falls back to LeetCode.
+        base.update({
+            "description": f"Solve **{meta['title']}** on LeetCode.",
+            "topic": "", "examples": [], "constraints": [],
+            "starter_code": {"python": "", "javascript": "", "cpp": ""},
+            "solvable": False,
+        })
+    return base
 
 
 async def get_problems(job: dict | None = None) -> list:
