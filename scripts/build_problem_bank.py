@@ -18,7 +18,7 @@ hardcoded to a company):
     annotations (the repo's Google/Microsoft/Goldman/JP Morgan/LinkedIn/Uber/
     VMware sheets are flattened printouts with zero embedded links) we derive
     each slug deterministically from its title - LeetCode slugs are generated
-    from the title (lowercase, drop apostrophes, non-alphanumeric runs -> '-').
+    from the title (lowercase, punctuation deleted, whitespace runs -> '-').
 """
 import os
 import re
@@ -109,6 +109,7 @@ def _extract_annot_slugs(reader: pypdf.PdfReader) -> list[str]:
     slugs: list[str] = []
     for page in reader.pages:
         annots = page.get("/Annots")
+        annots = annots.get_object() if annots is not None else None
         if not annots:
             continue
         try:
@@ -135,12 +136,21 @@ def _extract_annot_slugs(reader: pypdf.PdfReader) -> list[str]:
 def _slugify(title: str) -> str:
     """LeetCode-style slug from a problem title.
 
-    LeetCode generates slugs from the title: lowercase, drop apostrophes, then
-    collapse every run of non-alphanumeric characters to a single hyphen.
+    LeetCode generates slugs from the title by deleting punctuation entirely
+    (no separator inserted) and turning whitespace runs into a single hyphen.
+    E.g. "Pow(x, n)" -> "powx-n", not "pow-x-n".
+
+    Hyphens already present in the title (e.g. "N-Queens", "UTF-8 Validation",
+    "Reverse Nodes in k-Group") are a real word-separator, same as whitespace,
+    and NOT deleted like other punctuation - real LeetCode slugs keep them
+    (n-queens, utf-8-validation, reverse-nodes-in-k-group). Deleting them
+    would fragment those problems from the identical-title records already
+    parsed with the correct slug from real embedded PDF links elsewhere in
+    this same dataset.
     """
-    t = title.lower().replace("'", "").replace("’", "")
-    t = re.sub(r"[^a-z0-9]+", "-", t)
-    return t.strip("-")
+    t = re.sub(r"[^a-z0-9\s-]", "", title.lower())
+    t = re.sub(r"[\s-]+", "-", t).strip("-")
+    return t
 
 
 def _parse_visible_rows(text: str, require_acc: bool) -> list[dict]:
@@ -280,6 +290,18 @@ def main() -> int:
         orderings[company] = "frequency" if mode == "text" else "listed"
         print(f"  ok       {company:14s} {len(records):4d} problems  "
               f"[{mode:10s}] ({basename})")
+
+    non_empty = len([c for c in per_company if per_company[c]])
+    if non_empty < 5:
+        print(
+            f"\nERROR: only {non_empty} of {len(FILENAME_COMPANY_MAP)} companies "
+            "produced any problems. The source PDFs under "
+            f"'{PDF_ROOT}' are probably missing (they are gitignored and not "
+            "checked into the repo). Refusing to overwrite the committed "
+            f"{OUT_PATH} with a near-empty bank.",
+            file=sys.stderr,
+        )
+        return 1
 
     bank = merge_records(per_company)
     for c in bank["companies"]:

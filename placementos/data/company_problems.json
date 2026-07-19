@@ -3084,8 +3084,28 @@
           "rank": 56
         },
         {
+          "company": "Goldman Sachs",
+          "rank": 56
+        },
+        {
+          "company": "Google",
+          "rank": 341
+        },
+        {
+          "company": "LinkedIn",
+          "rank": 104
+        },
+        {
+          "company": "Microsoft",
+          "rank": 298
+        },
+        {
           "company": "Oracle",
           "rank": 20
+        },
+        {
+          "company": "Uber",
+          "rank": 118
         }
       ]
     },
@@ -4322,12 +4342,32 @@
           "rank": 76
         },
         {
+          "company": "Google",
+          "rank": 214
+        },
+        {
+          "company": "LinkedIn",
+          "rank": 68
+        },
+        {
+          "company": "Microsoft",
+          "rank": 189
+        },
+        {
           "company": "Oracle",
           "rank": 9
         },
         {
           "company": "Twitter",
           "rank": 27
+        },
+        {
+          "company": "Uber",
+          "rank": 74
+        },
+        {
+          "company": "VMware",
+          "rank": 46
         }
       ]
     },
@@ -8382,6 +8422,14 @@
         {
           "company": "Amazon",
           "rank": 273
+        },
+        {
+          "company": "LinkedIn",
+          "rank": 124
+        },
+        {
+          "company": "VMware",
+          "rank": 79
         }
       ]
     },
@@ -8548,6 +8596,10 @@
         {
           "company": "Facebook",
           "rank": 82
+        },
+        {
+          "company": "LinkedIn",
+          "rank": 127
         }
       ]
     },
@@ -10664,6 +10716,18 @@
         {
           "company": "Facebook",
           "rank": 166
+        },
+        {
+          "company": "Google",
+          "rank": 89
+        },
+        {
+          "company": "LinkedIn",
+          "rank": 25
+        },
+        {
+          "company": "Microsoft",
+          "rank": 76
         }
       ]
     },
@@ -20274,36 +20338,6 @@
       ]
     },
     {
-      "slug": "pow-x-n",
-      "id": 50,
-      "title": "Pow(x, n)",
-      "difficulty": "Medium",
-      "acceptance": 32.5,
-      "leetcode_url": "https://leetcode.com/problems/pow-x-n/",
-      "companies": [
-        {
-          "company": "Goldman Sachs",
-          "rank": 56
-        },
-        {
-          "company": "Google",
-          "rank": 341
-        },
-        {
-          "company": "LinkedIn",
-          "rank": 104
-        },
-        {
-          "company": "Microsoft",
-          "rank": 298
-        },
-        {
-          "company": "Uber",
-          "rank": 118
-        }
-      ]
-    },
-    {
       "slug": "design-in-memory-file-system",
       "id": 588,
       "title": "Design In-Memory File System",
@@ -20536,28 +20570,6 @@
         {
           "company": "Google",
           "rank": 80
-        }
-      ]
-    },
-    {
-      "slug": "sqrt-x",
-      "id": 69,
-      "title": "Sqrt(x)",
-      "difficulty": "Easy",
-      "acceptance": 36.6,
-      "leetcode_url": "https://leetcode.com/problems/sqrt-x/",
-      "companies": [
-        {
-          "company": "Google",
-          "rank": 89
-        },
-        {
-          "company": "LinkedIn",
-          "rank": 25
-        },
-        {
-          "company": "Microsoft",
-          "rank": 76
         }
       ]
     },
@@ -21130,36 +21142,6 @@
         {
           "company": "Google",
           "rank": 213
-        }
-      ]
-    },
-    {
-      "slug": "insert-delete-getrandom-o-1",
-      "id": 380,
-      "title": "Insert Delete GetRandom O(1)",
-      "difficulty": "Medium",
-      "acceptance": 51.5,
-      "leetcode_url": "https://leetcode.com/problems/insert-delete-getrandom-o-1/",
-      "companies": [
-        {
-          "company": "Google",
-          "rank": 214
-        },
-        {
-          "company": "LinkedIn",
-          "rank": 68
-        },
-        {
-          "company": "Microsoft",
-          "rank": 189
-        },
-        {
-          "company": "Uber",
-          "rank": 74
-        },
-        {
-          "company": "VMware",
-          "rank": 46
         }
       ]
     },
@@ -22904,38 +22886,6 @@
         {
           "company": "VMware",
           "rank": 76
-        }
-      ]
-    },
-    {
-      "slug": "all-o-one-data-structure",
-      "id": 432,
-      "title": "All O`one Data Structure",
-      "difficulty": "Hard",
-      "acceptance": 36.5,
-      "leetcode_url": "https://leetcode.com/problems/all-o-one-data-structure/",
-      "companies": [
-        {
-          "company": "LinkedIn",
-          "rank": 124
-        },
-        {
-          "company": "VMware",
-          "rank": 79
-        }
-      ]
-    },
-    {
-      "slug": "insert-delete-getrandom-o-1-duplicates-allowed",
-      "id": 381,
-      "title": "Insert Delete GetRandom O(1) - Duplicates allowed",
-      "difficulty": "Hard",
-      "acceptance": 35.6,
-      "leetcode_url": "https://leetcode.com/problems/insert-delete-getrandom-o-1-duplicates-allowed/",
-      "companies": [
-        {
-          "company": "LinkedIn",
-          "rank": 127
         }
       ]
     },
