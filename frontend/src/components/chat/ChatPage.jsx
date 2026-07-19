@@ -119,7 +119,7 @@ export function ChatPage() {
   const isEmpty = messages.length === 0
 
   return (
-    <div className="flex flex-col h-full min-h-screen">
+    <div className="flex flex-col h-full min-h-0">
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="relative shrink-0 px-6 py-5 border-b border-slate-700/40 overflow-hidden"

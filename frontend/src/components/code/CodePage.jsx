@@ -64,6 +64,10 @@ export function CodePage() {
   const [company, setCompany]             = useState('')
   const [loadingDetail, setLoadingDetail] = useState(false)
 
+  // Mobile-only: which single panel is visible ('list' | 'problem' | 'code').
+  // Ignored on lg+ where all three columns show side by side.
+  const [mobileView, setMobileView]       = useState('list')
+
   const [loadingProblems, setLoadingProblems] = useState(true)
   const [evaluating, setEvaluating]           = useState(false)
   const [hinting, setHinting]                 = useState(false)
@@ -123,6 +127,7 @@ export function CodePage() {
   // description and load straight through.
   async function openProblem(p) {
     setResult(null); setHint('')
+    setMobileView('problem')   // on mobile, jump to the problem panel once tapped
     if (p.slug && !p.description) {
       setLoadingDetail(true)
       try {
@@ -182,11 +187,31 @@ export function CodePage() {
     : 'text-red-400'
     : ''
 
+  const MOBILE_TABS = [
+    { id: 'list',    label: 'Problems' },
+    { id: 'problem', label: 'Problem'  },
+    { id: 'code',    label: 'Code'     },
+  ]
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-full overflow-hidden">
+
+      {/* ── Mobile view switcher (hidden on lg+) ────────────── */}
+      <div className="lg:hidden flex shrink-0 border-b border-slate-700/40" style={{ background: '#0B1120' }}>
+        {MOBILE_TABS.map(v => (
+          <button key={v.id} onClick={() => setMobileView(v.id)}
+            className={`flex-1 text-xs font-semibold py-2.5 transition-colors border-b-2 ${
+              mobileView === v.id
+                ? 'text-white border-indigo-500'
+                : 'text-slate-500 border-transparent hover:text-slate-300'
+            }`}>
+            {v.label}
+          </button>
+        ))}
+      </div>
 
       {/* ── Problem List Sidebar ────────────────────────────── */}
-      <div className="w-64 shrink-0 flex flex-col border-r border-slate-700/40 overflow-hidden"
+      <div className={`${mobileView === 'list' ? 'flex' : 'hidden'} lg:flex flex-1 lg:flex-none w-full lg:w-64 min-h-0 flex-col border-r border-slate-700/40 overflow-hidden`}
            style={{ background: '#0B1120' }}>
 
         {/* Header */}
@@ -291,24 +316,24 @@ export function CodePage() {
 
       {/* ── Main Panel ──────────────────────────────────────── */}
       {loadingDetail ? (
-        <div className="flex-1 flex items-center justify-center">
+        <div className={`${mobileView !== 'list' ? 'flex' : 'hidden'} lg:flex flex-1 min-h-0 items-center justify-center`}>
           <div className="text-center">
             <Loader2 size={28} className="text-indigo-400 mx-auto mb-3 animate-spin" />
             <p className="text-slate-500 text-sm">Loading problem…</p>
           </div>
         </div>
       ) : !selected ? (
-        <div className="flex-1 flex items-center justify-center">
+        <div className={`${mobileView !== 'list' ? 'flex' : 'hidden'} lg:flex flex-1 min-h-0 items-center justify-center`}>
           <div className="text-center">
             <BookOpen size={40} className="text-slate-700 mx-auto mb-3" />
             <p className="text-slate-500 text-sm">Select a problem to start</p>
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex overflow-hidden">
+        <>
 
           {/* Problem description */}
-          <div className="w-[42%] shrink-0 flex flex-col border-r border-slate-700/40 overflow-y-auto"
+          <div className={`${mobileView === 'problem' ? 'flex' : 'hidden'} lg:flex flex-1 lg:flex-none w-full lg:w-[42%] min-h-0 flex-col border-r border-slate-700/40 overflow-y-auto`}
                style={{ background: '#0F172A' }}>
             <div className="p-6">
               {/* Title + badges */}
@@ -380,10 +405,10 @@ export function CodePage() {
           </div>
 
           {/* Editor + Results */}
-          <div className="flex-1 flex flex-col overflow-hidden" style={{ background: '#0B1120' }}>
+          <div className={`${mobileView === 'code' ? 'flex' : 'hidden'} lg:flex flex-1 min-h-0 flex-col overflow-hidden`} style={{ background: '#0B1120' }}>
 
             {/* Toolbar */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/40 shrink-0">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/40 shrink-0 overflow-x-auto">
               {/* Language selector */}
               <div className="flex gap-1 bg-slate-800/60 border border-slate-700/40 rounded-xl p-1">
                 {LANGUAGES.map(l => (
@@ -517,7 +542,7 @@ export function CodePage() {
               </div>
             )}
           </div>
-        </div>
+        </>
       )}
     </div>
   )
